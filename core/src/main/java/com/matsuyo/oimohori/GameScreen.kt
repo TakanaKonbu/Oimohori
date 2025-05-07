@@ -34,7 +34,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private var moguraDragEnd = Vector2()
     private var lastSwipeTime = 0f
     private var swipeSpeed = 0f
-    private var moguraState = MoguraState.IDLE // 初期状態をIDLEに変更
+    private var moguraState = MoguraState.IDLE
     private var moguraY = 580f
     private var collectedImos = 0
     private val imoScale = 0.5f
@@ -42,9 +42,11 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private val moguraX = 1080f / 2f - mogura1Texture.width / 2f
     private val particles = mutableListOf<Particle>()
     private var showTuruhasi = true
+    private var digTimer = 0f
+    private val DIG_DURATION = 0.5f
 
     enum class MoguraState {
-        IDLE, WAITING, MOVING
+        IDLE, DIGGING, WAITING, MOVING
     }
 
     private data class Particle(
@@ -88,7 +90,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
-        // デバイス画面全体をピクセル座標で塗る（黒帯対策）
         shapeRenderer.projectionMatrix = pixelCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         val screenHeight = Gdx.graphics.height.toFloat()
@@ -100,7 +101,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         shapeRenderer.rect(0f, midY, screenWidth, screenHeight - midY)
         shapeRenderer.end()
 
-        // ビューポートを適用してワールド座標で描画
         viewport.apply()
 
         shapeRenderer.projectionMatrix = worldCamera.combined
@@ -111,7 +111,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         shapeRenderer.rect(0f, 0f, 1080f, 650f)
         shapeRenderer.end()
 
-        // 土の粒を描画
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
         particles.forEach { particle ->
@@ -119,24 +118,19 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         }
         shapeRenderer.end()
 
-        // 土の粒を更新
         updateParticles(delta)
 
         game.batch.projectionMatrix = worldCamera.combined
         game.batch.begin()
-        // モグラ、つた、芋の描画
         when (moguraState) {
-            MoguraState.IDLE -> {}
+            MoguraState.IDLE, MoguraState.DIGGING -> {}
             MoguraState.WAITING -> {
                 game.batch.draw(mogura1Texture, moguraX, moguraY)
             }
             MoguraState.MOVING -> {
-                // モグラ（mogura2.png）を最上部に
                 game.batch.draw(mogura2Texture, moguraX, moguraY)
-                // つたをモグラの下に
                 val tsutaY = moguraY - tsutaTexture.height
                 game.batch.draw(tsutaTexture, moguraX + (mogura2Texture.width - tsutaTexture.width) / 2f, tsutaY)
-                // 芋をつたの下に（▲のように配置、重なるように）
                 if (imoTexture != null) {
                     for (i in 0 until collectedImos) {
                         val pos = imoPositions[i]
@@ -151,25 +145,20 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                 }
             }
         }
-        // つるはしの描画（フラグに応じて）
         if (showTuruhasi) {
             val turuhasiScale = 0.5f
             val turuhasiWidth = turuhasiTexture.width * turuhasiScale
             val turuhasiHeight = turuhasiTexture.height * turuhasiScale
             game.batch.draw(turuhasiTexture, turuhasiX, turuhasiY, turuhasiWidth, turuhasiHeight)
         }
-        // スコア表示
         font.draw(game.batch, "Score: $score", 50f, 1900f, 0f, Align.left, false)
         game.batch.end()
 
-        // モグラのアニメーション
         if (moguraState == MoguraState.MOVING) {
             moguraY += 500f * delta
-            // 芋の位置も更新
             for (i in 0 until collectedImos) {
                 imoPositions[i].y += 500f * delta
             }
-            // 最下部の芋が画面外に出たらリセット
             if (collectedImos > 0) {
                 val lowestImoY = imoPositions.last().y
                 if (lowestImoY > 1920f) {
@@ -177,7 +166,15 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     moguraY = 580f
                     imoPositions.clear()
                     showTuruhasi = true
+                    game.setScreen(ResultScreen(game)) // ResultScreen に遷移
                 }
+            }
+        }
+        if (moguraState == MoguraState.DIGGING) {
+            digTimer += delta
+            if (digTimer >= DIG_DURATION) {
+                moguraState = MoguraState.WAITING
+                digTimer = 0f
             }
         }
 
@@ -189,7 +186,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
             val touchX = Gdx.input.x.toFloat() * (1080f / Gdx.graphics.width)
             val touchY = (Gdx.graphics.height - Gdx.input.y) * (1920f / Gdx.graphics.height)
 
-            // つるはしのスワイプ（下方向）
             if (moguraState == MoguraState.IDLE) {
                 if (!isTuruhasiDragging) {
                     isTuruhasiDragging = true
@@ -201,22 +197,20 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     turuhasiY = touchY - (turuhasiTexture.height * 0.5f) / 2f
                     turuhasiX = touchX - (turuhasiTexture.width * 0.5f) / 2f
 
-                    // 下方向にスワイプしたか確認
                     if (turuhasiDragEnd.y < turuhasiDragStart.y && turuhasiY <= 650f) {
                         swipeSpeed = turuhasiDragStart.dst(turuhasiDragEnd) / lastSwipeTime
-                        // 土の粒を生成（速度に応じた量）
                         val particleCount = when {
+                            swipeSpeed > 2000f -> 50
                             swipeSpeed > 1500f -> 30
                             swipeSpeed > 1000f -> 20
                             else -> 10
                         }
-                        spawnParticles(particleCount, turuhasiX + (turuhasiTexture.width * 0.5f) / 2f, 650f)
-                        moguraState = MoguraState.WAITING
+                        spawnParticles(particleCount, turuhasiX + (turuhasiTexture.width * 0.5f) / 2f, 650f, swipeSpeed)
+                        moguraState = MoguraState.DIGGING
                         resetTuruhasi()
                     }
                 }
             }
-            // モグラのスワイプ（上方向）
             else if (moguraState == MoguraState.WAITING) {
                 if (!isMoguraDragging) {
                     isMoguraDragging = true
@@ -233,7 +227,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         moguraState = MoguraState.MOVING
                         showTuruhasi = false
 
-                        // 芋の位置を▲の形に設定（重なるように）
                         imoPositions.clear()
                         val tsutaY = moguraY - tsutaTexture.height
                         val tsutaCenterX = moguraX + (mogura2Texture.width - tsutaTexture.width) / 2f + tsutaTexture.width / 2f
@@ -256,11 +249,12 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         }
     }
 
-    private fun spawnParticles(count: Int, x: Float, y: Float) {
+    private fun spawnParticles(count: Int, x: Float, y: Float, swipeSpeed: Float) {
+        val speedFactor = swipeSpeed / 1000f
         for (i in 0 until count) {
-            val vx = MathUtils.random(-100f, 100f)
-            val vy = MathUtils.random(100f, 300f)
-            particles.add(Particle(x, y, vx, vy, 1f))
+            val vx = MathUtils.random(-150f * speedFactor, 150f * speedFactor)
+            val vy = MathUtils.random(200f * speedFactor, 400f * speedFactor)
+            particles.add(Particle(x, y, vx, vy, 1.5f))
         }
     }
 
