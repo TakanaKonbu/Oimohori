@@ -21,7 +21,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private val mogura2Texture: Texture = Texture(Gdx.files.internal("mogura2.png"))
     private val turuhasiTexture: Texture = Texture(Gdx.files.internal("turuhasi.png"))
     private val tsutaTexture: Texture = Texture(Gdx.files.internal("tsuta.png"))
-    private var imoTexture: Texture? = null
     private val font = BitmapFont()
     private var score = 0
     private var isTuruhasiDragging = false
@@ -38,12 +37,59 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private var moguraY = 580f
     private var collectedImos = 0
     private val imoScale = 0.5f
-    private val imoPositions = mutableListOf<Vector2>()
     private val moguraX = 1080f / 2f - mogura1Texture.width / 2f
     private val particles = mutableListOf<Particle>()
     private var showTuruhasi = true
     private var digTimer = 0f
     private val DIG_DURATION = 0.5f
+
+    // 芋の種類を定義
+    private data class ImoType(
+        val name: String,
+        val textureName: String,
+        val points: Int,
+        val minImos: Int = 0,
+        val probability: Float = 1.0f
+    )
+
+    private val imoTypes = listOf(
+        ImoType("通常芋", "normal_imo.png", 5),
+        ImoType("シルバー芋", "silver_imo.png", 7, 30, 0.2f),
+        ImoType("ゴールド芋", "gold_imo.png", 10, 40, 0.2f),
+        ImoType("メラメラ芋", "fire_imo.png", 12, 50, 0.2f),
+        ImoType("ヒエヒエ芋", "ice_imo.png", 12, 50, 0.2f),
+        ImoType("キラキラ芋", "star_imo.png", 12, 50, 0.2f),
+        ImoType("キリン芋", "giraffe_imo.png", 15, 70, 0.2f),
+        ImoType("シマウマ芋", "zebra_imo.png", 12, 70, 0.2f),
+        ImoType("ウシ芋", "cow_imo.png", 12, 70, 0.2f),
+        ImoType("DJ芋", "dj_imo.png", 15, 80, 0.2f),
+        ImoType("虹芋", "rainbow_imo.png", 15, 80, 0.2f),
+        ImoType("迷彩芋", "meisai_imo.png", 15, 80, 0.2f),
+        ImoType("日本芋", "japan_imo.png", 20, 100, 0.2f),
+        ImoType("アメリカ芋", "usa_imo.png", 20, 100, 0.2f),
+        ImoType("ドイツ芋", "Germany_imo.png", 20, 100, 0.2f),
+        ImoType("ジャマイカ芋", "jamaica_imo.png", 20, 100, 0.2f),
+        ImoType("ロシア芋", "russia_imo.png", 20, 100, 0.2f),
+        ImoType("野球芋", "baseball_imo.png", 25, 120, 0.2f),
+        ImoType("ラグビーボール", "rugbyball.png", 25, 120, 0.2f),
+        ImoType("サッカー芋", "soccer_imo.png", 25, 120, 0.2f),
+        ImoType("バスケ芋", "basketball_imo.png", 25, 120, 0.2f),
+        ImoType("虫食い芋", "musikui_imo.png", 1, probability = 0.05f),
+        ImoType("小石", "koisi.png", 1, probability = 0.05f),
+        ImoType("ミミズ", "mimizu.png", 1, probability = 0.05f),
+        ImoType("ジャガイモ", "poteto.png", 1, probability = 0.05f)
+    )
+
+    // テクスチャのキャッシュ
+    private val textureCache = mutableMapOf<String, Texture>()
+
+    // 芋の位置と種類を保持
+    private data class ImoInstance(
+        val position: Vector2,
+        val imoType: ImoType
+    )
+
+    private val imoInstances = mutableListOf<ImoInstance>()
 
     enum class MoguraState {
         IDLE, DIGGING, WAITING, MOVING
@@ -66,13 +112,16 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         tsutaTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         font.data.setScale(2f)
 
-        try {
-            imoTexture = Texture(Gdx.files.internal("normal_imo.png")).apply {
-                setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        // テクスチャキャッシュの初期化
+        imoTypes.forEach { imoType ->
+            try {
+                val texture = Texture(Gdx.files.internal(imoType.textureName)).apply {
+                    setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+                }
+                textureCache[imoType.textureName] = texture
+            } catch (e: Exception) {
+                Gdx.app.error("GameScreen", "Failed to load ${imoType.textureName}: ${e.message}")
             }
-        } catch (e: Exception) {
-            Gdx.app.error("GameScreen", "Failed to load normal_imo.png: ${e.message}")
-            imoTexture = null
         }
     }
 
@@ -131,17 +180,15 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                 game.batch.draw(mogura2Texture, moguraX, moguraY)
                 val tsutaY = moguraY - tsutaTexture.height
                 game.batch.draw(tsutaTexture, moguraX + (mogura2Texture.width - tsutaTexture.width) / 2f, tsutaY)
-                if (imoTexture != null) {
-                    for (i in 0 until collectedImos) {
-                        val pos = imoPositions[i]
-                        game.batch.draw(
-                            imoTexture,
-                            pos.x,
-                            pos.y,
-                            imoTexture!!.width * imoScale,
-                            imoTexture!!.height * imoScale
-                        )
-                    }
+                imoInstances.forEach { imo ->
+                    val texture = textureCache[imo.imoType.textureName] ?: textureCache["normal_imo.png"]!!
+                    game.batch.draw(
+                        texture,
+                        imo.position.x,
+                        imo.position.y,
+                        texture.width * imoScale,
+                        texture.height * imoScale
+                    )
                 }
             }
         }
@@ -156,17 +203,17 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
 
         if (moguraState == MoguraState.MOVING) {
             moguraY += 500f * delta
-            for (i in 0 until collectedImos) {
-                imoPositions[i].y += 500f * delta
+            imoInstances.forEach { imo ->
+                imo.position.y += 500f * delta
             }
             if (collectedImos > 0) {
-                val lowestImoY = imoPositions.last().y
+                val lowestImoY = imoInstances.last().position.y
                 if (lowestImoY > 1920f) {
                     moguraState = MoguraState.IDLE
                     moguraY = 580f
-                    imoPositions.clear()
+                    imoInstances.clear()
                     showTuruhasi = true
-                    game.setScreen(ResultScreen(game)) // ResultScreen に遷移
+                    game.setScreen(ResultScreen(game))
                 }
             }
         }
@@ -223,20 +270,23 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         swipeSpeed = moguraDragStart.dst(moguraDragEnd) / lastSwipeTime
                         val bonus = if (swipeSpeed > 1000f) 2 else 1
                         collectedImos = 50 * bonus
-                        score += collectedImos
-                        moguraState = MoguraState.MOVING
-                        showTuruhasi = false
 
-                        imoPositions.clear()
+                        imoInstances.clear()
+                        var totalPoints = 0
                         val tsutaY = moguraY - tsutaTexture.height
                         val tsutaCenterX = moguraX + (mogura2Texture.width - tsutaTexture.width) / 2f + tsutaTexture.width / 2f
                         for (i in 0 until collectedImos) {
-                            val imoY = tsutaY - (i + 1) * (imoTexture!!.height * imoScale * 0.3f)
+                            val selectedImo = selectImoType(collectedImos)
+                            totalPoints += selectedImo.points
+                            val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.3f) ?: 50f)
                             val spreadFactor = (i + 1) * 20f
                             val offsetX = MathUtils.random(-spreadFactor, spreadFactor)
-                            val imoX = tsutaCenterX - (imoTexture!!.width * imoScale) / 2f + offsetX
-                            imoPositions.add(Vector2(imoX, imoY))
+                            val imoX = tsutaCenterX - (textureCache[selectedImo.textureName]?.width?.times(imoScale)?.div(2f) ?: 50f) + offsetX
+                            imoInstances.add(ImoInstance(Vector2(imoX, imoY), selectedImo))
                         }
+                        score += totalPoints
+                        moguraState = MoguraState.MOVING
+                        showTuruhasi = false
                     }
                 }
             }
@@ -247,6 +297,27 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                 resetTuruhasi()
             }
         }
+    }
+
+    private fun selectImoType(collectedImos: Int): ImoType {
+        // 常に5%の確率で出現する芋をチェック
+        val alwaysAvailable = imoTypes.filter { it.probability == 0.05f }
+        if (MathUtils.random() < 0.05f) {
+            return alwaysAvailable.random()
+        }
+
+        // 収穫数に応じて可能な芋をフィルタリング
+        val availableImos = imoTypes.filter {
+            it.minImos <= collectedImos && it.probability > 0.05f
+        }
+
+        // 20%の確率で特殊芋を選択
+        if (availableImos.isNotEmpty() && MathUtils.random() < 0.2f) {
+            return availableImos.random()
+        }
+
+        // デフォルトは通常芋
+        return imoTypes[0]
     }
 
     private fun spawnParticles(count: Int, x: Float, y: Float, swipeSpeed: Float) {
@@ -282,7 +353,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         mogura2Texture.dispose()
         turuhasiTexture.dispose()
         tsutaTexture.dispose()
-        imoTexture?.dispose()
+        textureCache.values.forEach { it.dispose() }
         shapeRenderer.dispose()
         font.dispose()
     }
