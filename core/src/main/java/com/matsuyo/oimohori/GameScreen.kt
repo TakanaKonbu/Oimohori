@@ -22,7 +22,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private val turuhasiTexture: Texture = Texture(Gdx.files.internal("turuhasi.png"))
     private val tsutaTexture: Texture = Texture(Gdx.files.internal("tsuta.png"))
     private val font = BitmapFont()
-    private var score = 0
     private var isTuruhasiDragging = false
     private var turuhasiDragStart = Vector2()
     private var turuhasiDragEnd = Vector2()
@@ -43,7 +42,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private var digTimer = 0f
     private val DIG_DURATION = 0.5f
 
-    // 芋の種類を定義
     private data class ImoType(
         val name: String,
         val textureName: String,
@@ -80,10 +78,8 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         ImoType("ジャガイモ", "poteto.png", 1, probability = 0.05f)
     )
 
-    // テクスチャのキャッシュ
     private val textureCache = mutableMapOf<String, Texture>()
 
-    // 芋の位置と種類を保持
     private data class ImoInstance(
         val position: Vector2,
         val imoType: ImoType
@@ -94,6 +90,8 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     enum class MoguraState {
         IDLE, DIGGING, WAITING, MOVING
     }
+
+
 
     private data class Particle(
         var x: Float,
@@ -112,7 +110,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         tsutaTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         font.data.setScale(2f)
 
-        // テクスチャキャッシュの初期化
         imoTypes.forEach { imoType ->
             try {
                 val texture = Texture(Gdx.files.internal(imoType.textureName)).apply {
@@ -198,7 +195,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
             val turuhasiHeight = turuhasiTexture.height * turuhasiScale
             game.batch.draw(turuhasiTexture, turuhasiX, turuhasiY, turuhasiWidth, turuhasiHeight)
         }
-        font.draw(game.batch, "Score: $score", 50f, 1900f, 0f, Align.left, false)
+        font.draw(game.batch, "Score: ${game.score}", 50f, 1900f, 0f, Align.left, false)
         game.batch.end()
 
         if (moguraState == MoguraState.MOVING) {
@@ -267,9 +264,9 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     moguraDragEnd.set(touchX, touchY)
                     lastSwipeTime += delta
                     if (moguraDragEnd.y > moguraDragStart.y) {
-                        swipeSpeed = moguraDragStart.dst(moguraDragEnd) / lastSwipeTime
+                        swipeSpeed = turuhasiDragStart.dst(turuhasiDragEnd) / lastSwipeTime
                         val bonus = if (swipeSpeed > 1000f) 2 else 1
-                        collectedImos = 50 * bonus
+                        collectedImos = game.moguraHarvest * game.turuhasiValue * bonus
 
                         imoInstances.clear()
                         var totalPoints = 0
@@ -284,7 +281,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                             val imoX = tsutaCenterX - (textureCache[selectedImo.textureName]?.width?.times(imoScale)?.div(2f) ?: 50f) + offsetX
                             imoInstances.add(ImoInstance(Vector2(imoX, imoY), selectedImo))
                         }
-                        score += totalPoints
+                        game.score += totalPoints
                         moguraState = MoguraState.MOVING
                         showTuruhasi = false
                     }
@@ -300,23 +297,19 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     }
 
     private fun selectImoType(collectedImos: Int): ImoType {
-        // 常に5%の確率で出現する芋をチェック
         val alwaysAvailable = imoTypes.filter { it.probability == 0.05f }
         if (MathUtils.random() < 0.05f) {
             return alwaysAvailable.random()
         }
 
-        // 収穫数に応じて可能な芋をフィルタリング
         val availableImos = imoTypes.filter {
             it.minImos <= collectedImos && it.probability > 0.05f
         }
 
-        // 20%の確率で特殊芋を選択
         if (availableImos.isNotEmpty() && MathUtils.random() < 0.2f) {
             return availableImos.random()
         }
 
-        // デフォルトは通常芋
         return imoTypes[0]
     }
 
