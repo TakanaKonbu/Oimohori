@@ -12,7 +12,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 
-class ResultScreen(private val game: GameMain) : ScreenAdapter() {
+class ResultScreen(private val game: GameMain, private val totalPoints: Int) : ScreenAdapter() {
     private val worldCamera = OrthographicCamera()
     private val viewport = ExtendViewport(1080f, 1920f, worldCamera)
     private val pixelCamera = OrthographicCamera()
@@ -36,7 +36,7 @@ class ResultScreen(private val game: GameMain) : ScreenAdapter() {
         pixelCamera.setToOrtho(false, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
-        font.data.setScale(3.8f) // フォントサイズを3.8倍
+        font.data.setScale(4.8f) // フォントサイズを3.8倍
         moguraTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         imoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         retryButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
@@ -86,9 +86,9 @@ class ResultScreen(private val game: GameMain) : ScreenAdapter() {
         // モグラ（y=650、中央）
         game.batch.draw(moguraTexture, (1080f - moguraTexture.width * imageScale) / 2, 600f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
 
-        // さつまいも（y=300, x=300）とスコア（y=300, x=500）
+        // さつまいも（y=300, x=300）とスコア（y=300, x=550）
         game.batch.draw(imoTexture, 300f, 150f, imoTexture.width * imoScale, imoTexture.height * imoScale)
-        font.draw(game.batch, "${game.score}", 550f, 300f, 0f, Align.left, false)
+        font.draw(game.batch, "$totalPoints", 550f, 300f, 0f, Align.left, false)
 
         // ボタン（y=1620、中央）
         game.batch.draw(retryButtonTexture, retryButton.x, retryButton.y, retryButton.width, retryButton.height)

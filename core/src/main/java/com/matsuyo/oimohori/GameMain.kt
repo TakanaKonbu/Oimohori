@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 
 class GameMain : Game() {
     lateinit var batch: SpriteBatch
-    var score = 500
+    var score = 0
     var moguraHarvest = 1 // モグラの収穫数（デフォルト1）
     var turuhasiLevel = 3 // ツルハシの共通レベル（デフォルト：3）
     var turuhasiValue = 3 // ツルハシの合計値（初期：3）

@@ -41,6 +41,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private var showTuruhasi = true
     private var digTimer = 0f
     private val DIG_DURATION = 0.5f
+    private var totalPoints = 0 // 今回のプレイで獲得したスコア
 
     private data class ImoType(
         val name: String,
@@ -90,8 +91,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     enum class MoguraState {
         IDLE, DIGGING, WAITING, MOVING
     }
-
-
 
     private data class Particle(
         var x: Float,
@@ -210,7 +209,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     moguraY = 580f
                     imoInstances.clear()
                     showTuruhasi = true
-                    game.setScreen(ResultScreen(game))
+                    game.setScreen(ResultScreen(game, totalPoints)) // totalPoints を渡す
                 }
             }
         }
@@ -254,8 +253,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         resetTuruhasi()
                     }
                 }
-            }
-            else if (moguraState == MoguraState.WAITING) {
+            } else if (moguraState == MoguraState.WAITING) {
                 if (!isMoguraDragging) {
                     isMoguraDragging = true
                     moguraDragStart.set(touchX, touchY)
@@ -269,7 +267,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         collectedImos = game.moguraHarvest * game.turuhasiValue * bonus
 
                         imoInstances.clear()
-                        var totalPoints = 0
+                        totalPoints = 0 // 今回のプレイのスコアをリセット
                         val tsutaY = moguraY - tsutaTexture.height
                         val tsutaCenterX = moguraX + (mogura2Texture.width - tsutaTexture.width) / 2f + tsutaTexture.width / 2f
                         for (i in 0 until collectedImos) {
