@@ -147,7 +147,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
             if (moguraUpgradeButton.contains(touchX, touchY) && game.score >= game.moguraCost) {
                 Gdx.app.log("ReinforcementScreen", "Mogura upgrade button tapped")
                 game.score -= game.moguraCost
-                game.moguraHarvest += 1
+                game.moguraHarvest = floor(game.moguraHarvest * 1.25f).toInt()
                 game.moguraCost = floor(game.moguraCost * 1.25f).toInt()
             }
 
