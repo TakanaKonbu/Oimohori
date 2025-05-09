@@ -155,7 +155,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                 Gdx.app.log("ReinforcementScreen", "Tsuruhasi value button tapped")
                 game.score -= game.turuhasiValueCost
                 game.turuhasiLevel += 1
-                game.turuhasiValueCost = floor(game.turuhasiValueCost * 1.25f).toInt()
+                game.turuhasiValueCost = floor(game.turuhasiValueCost * 1.1f).toInt()
                 game.updateTuruhasiValue()
             }
 
