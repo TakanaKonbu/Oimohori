@@ -23,15 +23,22 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
     private val moguraTexture = Texture(Gdx.files.internal("mogura1.png"))
     private val turuhasiTexture = Texture(Gdx.files.internal("turuhasi.png"))
     private val imoTexture = Texture(Gdx.files.internal("normal_imo.png"))
+    private val syuukakuTexture = Texture(Gdx.files.internal("syuukaku.png"))
+    private val honsuuTexture = Texture(Gdx.files.internal("honsuu.png"))
+    private val backToTopTexture = Texture(Gdx.files.internal("back_to_top.png"))
+    private val usePointTexture = Texture(Gdx.files.internal("use_point.png"))
     private val buttonScale = 0.8f
     private val imageScale = 0.6f
     private val imoScale = 0.5f
+    private val labelScale = 0.6f
+    private val labelImageScale = 1.0f
     private val buttonWidth = upgradeButtonTexture.width * buttonScale
     private val buttonHeight = upgradeButtonTexture.height * buttonScale
-    private val moguraUpgradeButton = Rectangle(590f, 1600f, buttonWidth, buttonHeight)
-    private val turuhasiValueButton = Rectangle(590f, 1150f, buttonWidth, buttonHeight) // ツルハシ強化ボタン
-    private val turuhasiUnlockButton = Rectangle(590f, 700f, buttonWidth, buttonHeight) // ツルハシ解放ボタン
-    private val backButton = Rectangle(50f, 1900f - 50f, 300f, 50f) // Back to Top ボタン
+    // 変更: ボタンの座標を中央に移動
+    private val moguraUpgradeButton = Rectangle(640f, 1350f, buttonWidth, buttonHeight)
+    private val turuhasiValueButton = Rectangle(640f, 900f, buttonWidth, buttonHeight)
+    private val turuhasiUnlockButton = Rectangle(640f, 450f, buttonWidth, buttonHeight)
+    private val backButton = Rectangle(50f, 1900f - 50f, 300f, 50f)
 
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
@@ -39,13 +46,16 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
         pixelCamera.setToOrtho(false, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
-        font.data.setScale(3.8f) // フォントサイズを3.8倍
+        font.data.setScale(3.8f)
         upgradeButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         moguraTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         turuhasiTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         imoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        syuukakuTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        honsuuTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        backToTopTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        usePointTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
-        // ボタン領域のデバッグログ
         Gdx.app.log("ReinforcementScreen", "Button size: width=$buttonWidth, height=$buttonHeight")
     }
 
@@ -59,62 +69,57 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
     }
 
     override fun render(delta: Float) {
-        // 黒帯対策：ピクセル座標で画面クリア
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
-        // ピクセル座標で背景を上下分割
         shapeRenderer.projectionMatrix = pixelCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         val screenHeight = Gdx.graphics.height.toFloat()
         val screenWidth = Gdx.graphics.width.toFloat()
         val midY = screenHeight / 2f
-        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f) // 茶色（下半分）
+        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
         shapeRenderer.rect(0f, 0f, screenWidth, midY)
-        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f) // 水色（上半分）
+        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
         shapeRenderer.rect(0f, midY, screenWidth, screenHeight - midY)
         shapeRenderer.end()
 
         viewport.apply()
 
-        // ワールド座標で背景を塗りつぶし
         shapeRenderer.projectionMatrix = worldCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f) // 水色（全体）
+        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
         shapeRenderer.rect(0f, 0f, 1080f, 1920f)
-        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f) // 茶色（下部 y=0～300）
+        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
         shapeRenderer.rect(0f, 0f, 1080f, 300f)
         shapeRenderer.end()
 
         game.batch.projectionMatrix = worldCamera.combined
         game.batch.begin()
 
-        // Back to Top ボタン
-        font.draw(game.batch, "< Back to Top", 50f, 1900f, 0f, Align.left, false)
+        // Back to Top
+        game.batch.draw(backToTopTexture, 50f, 1900f - backToTopTexture.height * labelScale, backToTopTexture.width * labelImageScale, backToTopTexture.height * labelImageScale)
 
         // 強化項目（Mogura）
-        // 左側：mogura1.png と Bonus
-        game.batch.draw(moguraTexture, 50f, 1600f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
-        font.draw(game.batch, "Bonus", 120f, 1550f, 0f, Align.left, false)
-        // 右側：upgrade_btn.png と Next ポイント
-        font.draw(game.batch, "Next ${game.moguraCost}pt", 590f, 1700f + buttonHeight + 50f, 0f, Align.left, false)
+        // 変更: X座標を100f、Y座標を250f下げる
+        game.batch.draw(moguraTexture, 100f, 1350f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
+        game.batch.draw(syuukakuTexture, 170f, 1300f - syuukakuTexture.height * labelScale / 2, syuukakuTexture.width * labelScale, syuukakuTexture.height * labelScale)
+        game.batch.draw(usePointTexture, 640f, 1450f + buttonHeight + 50f - usePointTexture.height * labelScale, usePointTexture.width * labelImageScale, usePointTexture.height * labelImageScale)
+        font.draw(game.batch, "${game.moguraCost}pt", 530f + usePointTexture.width * labelScale + 10f, 1400f + buttonHeight + 50f, 0f, Align.left, false)
         game.batch.draw(upgradeButtonTexture, moguraUpgradeButton.x, moguraUpgradeButton.y, moguraUpgradeButton.width, moguraUpgradeButton.height)
 
         // 強化項目（Tsuruhasi レベル強化）
-        // 左側：turuhasi.png と Bonus
-        game.batch.draw(turuhasiTexture, 50f, 1150f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
-        font.draw(game.batch, "Bonus", 120f, 1100f, 0f, Align.left, false)
-        // 右側：upgrade_btn.png と Next ポイント
-        font.draw(game.batch, "Next ${game.turuhasiValueCost}pt", 590f, 1250f + buttonHeight + 50f, 0f, Align.left, false)
+        game.batch.draw(turuhasiTexture, 100f, 900f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
+        game.batch.draw(syuukakuTexture, 170f, 850f - syuukakuTexture.height * labelScale / 2, syuukakuTexture.width * labelScale, syuukakuTexture.height * labelScale)
+        game.batch.draw(usePointTexture, 640f, 1000f + buttonHeight + 50f - usePointTexture.height * labelScale, usePointTexture.width * labelImageScale, usePointTexture.height * labelImageScale)
+        font.draw(game.batch, "${game.turuhasiValueCost}pt", 530f + usePointTexture.width * labelScale + 10f, 950f + buttonHeight + 50f, 0f, Align.left, false)
         game.batch.draw(upgradeButtonTexture, turuhasiValueButton.x, turuhasiValueButton.y, turuhasiValueButton.width, turuhasiValueButton.height)
 
         // 強化項目（Tsuruhasi 解放）
-        // 左側：turuhasi.png と Quantity
-        game.batch.draw(turuhasiTexture, 50f, 700f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
-        font.draw(game.batch, "Quantity", 120f, 650f, 0f, Align.left, false)
-        // 右側：upgrade_btn.png と Next ポイント（解放上限に達していない場合のみ）
+        game.batch.draw(turuhasiTexture, 100f, 450f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
+        game.batch.draw(honsuuTexture, 170f, 400f - honsuuTexture.height * labelScale / 2, honsuuTexture.width * labelScale, honsuuTexture.height * labelScale)
         if (game.turuhasiUnlockedCount < 2) {
-            font.draw(game.batch, "Next ${game.turuhasiUnlockCost}pt", 590f, 800f + buttonHeight + 50f, 0f, Align.left, false)
+            game.batch.draw(usePointTexture, 640f, 550f + buttonHeight + 50f - usePointTexture.height * labelScale, usePointTexture.width * labelImageScale, usePointTexture.height * labelImageScale)
+            font.draw(game.batch, "${game.turuhasiUnlockCost}pt", 530f + usePointTexture.width * labelScale + 10f, 500f + buttonHeight + 50f, 0f, Align.left, false)
         }
         game.batch.draw(upgradeButtonTexture, turuhasiUnlockButton.x, turuhasiUnlockButton.y, turuhasiUnlockButton.width, turuhasiUnlockButton.height)
 
@@ -129,16 +134,13 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
     private fun handleInput() {
         if (Gdx.input.justTouched()) {
-            // ビューポートを使用してタッチ座標をワールド座標に変換
             val touchPos = Vector2(Gdx.input.x.toFloat(), Gdx.input.y.toFloat())
             viewport.unproject(touchPos)
             val touchX = touchPos.x
             val touchY = touchPos.y
 
-            // タッチ座標のデバッグログ
             Gdx.app.log("ReinforcementScreen", "Touch: x=$touchX, y=$touchY")
 
-            // Back to Top ボタン
             if (backButton.contains(touchX, touchY)) {
                 Gdx.app.log("ReinforcementScreen", "Back to Top button tapped")
                 game.setScreen(TitleScreen(game))
@@ -164,9 +166,9 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                 game.score -= game.turuhasiUnlockCost
                 game.turuhasiUnlockedCount += 1
                 if (game.turuhasiUnlockedCount == 1) {
-                    game.turuhasiUnlockCost = 700 // ツルハシ3の解放コスト
+                    game.turuhasiUnlockCost = 700
                 } else if (game.turuhasiUnlockedCount == 2) {
-                    game.turuhasiUnlockCost = 0 // 上限到達
+                    game.turuhasiUnlockCost = 0
                 }
                 game.updateTuruhasiValue()
             }
@@ -179,6 +181,10 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
         moguraTexture.dispose()
         turuhasiTexture.dispose()
         imoTexture.dispose()
+        syuukakuTexture.dispose()
+        honsuuTexture.dispose()
+        backToTopTexture.dispose()
+        usePointTexture.dispose()
         shapeRenderer.dispose()
     }
 }
