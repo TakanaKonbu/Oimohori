@@ -71,6 +71,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
     override fun render(delta: Float) {
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+        font.setColor(0f, 0f, 0f, 1f)
 
         shapeRenderer.projectionMatrix = pixelCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
@@ -125,7 +126,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
         // さつまいもとスコア
         game.batch.draw(imoTexture, 300f, 10f, imoTexture.width * imoScale, imoTexture.height * imoScale)
-        font.draw(game.batch, "${game.score}", 500f, 150f, 0f, Align.left, false)
+        font.draw(game.batch, "${game.score}pt", 500f, 150f, 0f, Align.left, false)
 
         game.batch.end()
 
