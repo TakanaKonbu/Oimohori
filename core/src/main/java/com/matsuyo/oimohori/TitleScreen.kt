@@ -17,6 +17,7 @@ class TitleScreen(private val game: GameMain) : ScreenAdapter() {
     private val shapeRenderer = ShapeRenderer()
     private val titleTexture = Texture(Gdx.files.internal("title.png"))
     private val reinforcementButtonTexture = Texture(Gdx.files.internal("reinforcement_btn.png"))
+    private val howToPlayButtonTexture = Texture(Gdx.files.internal("how_to_play_btn.png")) // 追加
     private val buttonScale = 0.7f
     private val reinforcementButton = Rectangle(
         50f,
@@ -24,15 +25,23 @@ class TitleScreen(private val game: GameMain) : ScreenAdapter() {
         reinforcementButtonTexture.width * buttonScale,
         reinforcementButtonTexture.height * buttonScale
     )
+    private val howToPlayButton = Rectangle(
+        50f + reinforcementButton.width + 20f, // 強化ボタンの右に20fの間隔で配置
+        1870f - howToPlayButtonTexture.height * buttonScale,
+        howToPlayButtonTexture.width * buttonScale,
+        howToPlayButtonTexture.height * buttonScale
+    )
 
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
         worldCamera.update()
         titleTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         reinforcementButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        howToPlayButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 追加
 
         // ボタン領域のデバッグログ
-        Gdx.app.log("TitleScreen", "Button: x=${reinforcementButton.x}, y=${reinforcementButton.y}, width=${reinforcementButton.width}, height=${reinforcementButton.height}")
+        Gdx.app.log("TitleScreen", "Reinforcement Button: x=${reinforcementButton.x}, y=${reinforcementButton.y}, width=${reinforcementButton.width}, height=${reinforcementButton.height}")
+        Gdx.app.log("TitleScreen", "HowToPlay Button: x=${howToPlayButton.x}, y=${howToPlayButton.y}, width=${howToPlayButton.width}, height=${howToPlayButton.height}")
     }
 
     override fun resize(width: Int, height: Int) {
@@ -73,6 +82,13 @@ class TitleScreen(private val game: GameMain) : ScreenAdapter() {
             reinforcementButton.width,
             reinforcementButton.height
         )
+        game.batch.draw(
+            howToPlayButtonTexture,
+            howToPlayButton.x,
+            howToPlayButton.y,
+            howToPlayButton.width,
+            howToPlayButton.height
+        ) // 追加
         game.batch.end()
 
         handleInput()
@@ -95,6 +111,11 @@ class TitleScreen(private val game: GameMain) : ScreenAdapter() {
                 game.setScreen(ReinforcementScreen(game))
                 return
             }
+            if (howToPlayButton.contains(touchX, touchY)) {
+                Gdx.app.log("TitleScreen", "How to Play button tapped")
+                game.setScreen(HowToPlayScreen(game)) // 追加
+                return
+            }
 
             // ボタン外の画面タッチで GameScreen に遷移
             if (touchX >= 0f && touchX <= 1080f && touchY >= 0f && touchY <= 1920f) {
@@ -107,6 +128,7 @@ class TitleScreen(private val game: GameMain) : ScreenAdapter() {
     override fun dispose() {
         titleTexture.dispose()
         reinforcementButtonTexture.dispose()
+        howToPlayButtonTexture.dispose() // 追加
         shapeRenderer.dispose()
     }
 }
