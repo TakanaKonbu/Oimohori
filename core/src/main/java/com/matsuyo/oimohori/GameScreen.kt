@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.ExtendViewport
+import kotlin.math.sin
 
 class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private val worldCamera = OrthographicCamera()
@@ -273,9 +274,12 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         for (i in 0 until collectedImos) {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
-                            val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.3f) ?: 50f)
-                            val spreadFactor = (i + 1) * 20f
-                            val offsetX = MathUtils.random(-spreadFactor, spreadFactor)
+                            // y座標：間隔を狭める（0.1f）
+                            val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.1f) ?: 50f)
+                            // x座標：ツタの中心から下に行くほど末広がりに配置（▲型）
+                            val spreadFactor = i * 2f // 1つ下の芋ごとに2fずつ広がる
+                            val angle = 0.5f // 滑らかに広がる角度（ラジアン）
+                            val offsetX = spreadFactor * sin(i * angle) // 滑らかに左右に広がる
                             val imoX = tsutaCenterX - (textureCache[selectedImo.textureName]?.width?.times(imoScale)?.div(2f) ?: 50f) + offsetX
                             imoInstances.add(ImoInstance(Vector2(imoX, imoY), selectedImo))
                         }
