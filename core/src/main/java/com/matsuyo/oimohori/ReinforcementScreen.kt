@@ -102,22 +102,22 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
         // 強化項目（Mogura）
         // 変更: X座標を100f、Y座標を250f下げる
-        game.batch.draw(moguraTexture, 100f, 1350f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
-        game.batch.draw(syuukakuTexture, 170f, 1300f - syuukakuTexture.height * labelScale / 2, syuukakuTexture.width * labelScale, syuukakuTexture.height * labelScale)
+        game.batch.draw(moguraTexture, 100f, 1400f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
+        game.batch.draw(syuukakuTexture, 170f, 1350f - syuukakuTexture.height * labelScale / 2, syuukakuTexture.width * labelScale, syuukakuTexture.height * labelScale)
         game.batch.draw(usePointTexture, 640f, 1450f + buttonHeight + 50f - usePointTexture.height * labelScale, usePointTexture.width * labelImageScale, usePointTexture.height * labelImageScale)
         font.draw(game.batch, "${game.moguraCost}pt", 530f + usePointTexture.width * labelScale + 10f, 1400f + buttonHeight + 50f, 0f, Align.left, false)
         game.batch.draw(upgradeButtonTexture, moguraUpgradeButton.x, moguraUpgradeButton.y, moguraUpgradeButton.width, moguraUpgradeButton.height)
 
         // 強化項目（Tsuruhasi レベル強化）
-        game.batch.draw(turuhasiTexture, 100f, 900f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
-        game.batch.draw(syuukakuTexture, 170f, 850f - syuukakuTexture.height * labelScale / 2, syuukakuTexture.width * labelScale, syuukakuTexture.height * labelScale)
+        game.batch.draw(turuhasiTexture, 100f, 950f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
+        game.batch.draw(syuukakuTexture, 170f, 900f - syuukakuTexture.height * labelScale / 2, syuukakuTexture.width * labelScale, syuukakuTexture.height * labelScale)
         game.batch.draw(usePointTexture, 640f, 1000f + buttonHeight + 50f - usePointTexture.height * labelScale, usePointTexture.width * labelImageScale, usePointTexture.height * labelImageScale)
         font.draw(game.batch, "${game.turuhasiValueCost}pt", 530f + usePointTexture.width * labelScale + 10f, 950f + buttonHeight + 50f, 0f, Align.left, false)
         game.batch.draw(upgradeButtonTexture, turuhasiValueButton.x, turuhasiValueButton.y, turuhasiValueButton.width, turuhasiValueButton.height)
 
         // 強化項目（Tsuruhasi 解放）
-        game.batch.draw(turuhasiTexture, 100f, 450f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
-        game.batch.draw(honsuuTexture, 170f, 400f - honsuuTexture.height * labelScale / 2, honsuuTexture.width * labelScale, honsuuTexture.height * labelScale)
+        game.batch.draw(turuhasiTexture, 100f, 500f, turuhasiTexture.width * imageScale, turuhasiTexture.height * imageScale)
+        game.batch.draw(honsuuTexture, 170f, 450f - honsuuTexture.height * labelScale / 2, honsuuTexture.width * labelScale, honsuuTexture.height * labelScale)
         if (game.turuhasiUnlockedCount < 2) {
             game.batch.draw(usePointTexture, 640f, 550f + buttonHeight + 50f - usePointTexture.height * labelScale, usePointTexture.width * labelImageScale, usePointTexture.height * labelImageScale)
             font.draw(game.batch, "${game.turuhasiUnlockCost}pt", 530f + usePointTexture.width * labelScale + 10f, 500f + buttonHeight + 50f, 0f, Align.left, false)
