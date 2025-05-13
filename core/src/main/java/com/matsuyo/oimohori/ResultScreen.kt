@@ -12,7 +12,12 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 
-class ResultScreen(private val game: GameMain, private val totalPoints: Int) : ScreenAdapter() {
+class ResultScreen(
+    private val game: GameMain,
+    private val totalPoints: Int,
+    private val collectedImos: Int,
+    private val imoCounts: Map<GameScreen.ImoType, Int>
+) : ScreenAdapter() {
     private val worldCamera = OrthographicCamera()
     private val viewport = ExtendViewport(1080f, 1920f, worldCamera)
     private val pixelCamera = OrthographicCamera()
@@ -23,13 +28,15 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
     private val imoTexture = Texture(Gdx.files.internal("normal_imo.png"))
     private val retryButtonTexture = Texture(Gdx.files.internal("retry_btn.png"))
     private val doubleButtonTexture = Texture(Gdx.files.internal("double_btn.png"))
+    private val breakdownButtonTexture = Texture(Gdx.files.internal("breakdown_btn.png"))
     private val buttonScale = 0.8f
     private val imageScale = 1.0f
     private val imoScale = 0.5f
     private val buttonWidth = retryButtonTexture.width * buttonScale
     private val buttonHeight = retryButtonTexture.height * buttonScale
-    private val retryButton = Rectangle((1080f - 2 * buttonWidth - 50f) / 2, 1620f, buttonWidth, buttonHeight)
-    private val doubleButton = Rectangle((1080f - 2 * buttonWidth - 50f) / 2 + buttonWidth + 50f, 1620f, buttonWidth, buttonHeight)
+    private val retryButton = Rectangle((1080f - 3 * buttonWidth - 100f) / 2, 1620f, buttonWidth, buttonHeight)
+    private val doubleButton = Rectangle((1080f - 3 * buttonWidth - 100f) / 2 + buttonWidth + 50f, 1620f, buttonWidth, buttonHeight)
+    private val breakdownButton = Rectangle((1080f - 3 * buttonWidth - 100f) / 2 + 2 * (buttonWidth + 50f), 1620f, buttonWidth, buttonHeight)
     private var animationTimer = 0f
     private val animationInterval = 0.5f // 0.5秒ごとに切り替え
     private var isMogura2 = true // 現在のテクスチャ（true: mogura2, false: mogura3）
@@ -46,6 +53,7 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
         imoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         retryButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         doubleButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        breakdownButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
     }
 
     override fun resize(width: Int, height: Int) {
@@ -113,6 +121,7 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
         // ボタン（y=1620、中央）
         game.batch.draw(retryButtonTexture, retryButton.x, retryButton.y, retryButton.width, retryButton.height)
         game.batch.draw(doubleButtonTexture, doubleButton.x, doubleButton.y, doubleButton.width, doubleButton.height)
+        game.batch.draw(breakdownButtonTexture, breakdownButton.x, breakdownButton.y, breakdownButton.width, breakdownButton.height)
 
         game.batch.end()
 
@@ -133,6 +142,9 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
             if (retryButton.contains(touchX, touchY)) {
                 Gdx.app.log("ResultScreen", "Retry button tapped")
                 game.setScreen(TitleScreen(game))
+            } else if (breakdownButton.contains(touchX, touchY)) {
+                Gdx.app.log("ResultScreen", "Breakdown button tapped")
+                game.setScreen(BreakdownScreen(game, collectedImos, imoCounts, this))
             }
         }
     }
@@ -144,6 +156,7 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
         imoTexture.dispose()
         retryButtonTexture.dispose()
         doubleButtonTexture.dispose()
+        breakdownButtonTexture.dispose()
         shapeRenderer.dispose()
     }
 }

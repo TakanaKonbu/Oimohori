@@ -62,7 +62,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     // 左右のツルハシの位置オフセット
     private val turuhasiOffsetX = 300f
 
-    private data class ImoType(
+    data class ImoType(
         val name: String,
         val textureName: String,
         val points: Int,
@@ -252,7 +252,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     moguraY = 580f
                     imoInstances.clear()
                     initTuruhasi() // ツルハシを再初期化
-                    game.setScreen(ResultScreen(game, totalPoints)) // totalPoints を渡す
+                    game.setScreen(ResultScreen(game, totalPoints, collectedImos, imoCounts)) // 収穫数と内訳を渡す
                 }
             }
         }
@@ -273,6 +273,8 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
             game.batch.draw(turuhasiTexture, turuhasi.x, turuhasi.y, turuhasiWidth, turuhasiHeight)
         }
     }
+
+    private val imoCounts = mutableMapOf<ImoType, Int>() // 芋ごとの収穫数
 
     private fun handleInput(delta: Float) {
         if (Gdx.input.isTouched) {
@@ -344,6 +346,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
 
                         imoInstances.clear()
                         totalPoints = 0 // 今回のプレイのスコアをリセット
+                        imoCounts.clear() // 内訳をリセット
                         val tsutaY = moguraY - tsutaTexture.height
                         val tsutaCenterX = moguraX + (mogura2Texture.width - tsutaTexture.width) / 2f + tsutaTexture.width / 2f
 
@@ -351,10 +354,11 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         val displayImos = min(collectedImos, MAX_IMO_DISPLAY)
                         Gdx.app.log("GameScreen", "Total imos: $collectedImos, Displaying: $displayImos")
 
-                        // 表示する芋の生成
+                        // 表示する芋の生成と内訳記録
                         for (i in 0 until displayImos) {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
+                            imoCounts[selectedImo] = imoCounts.getOrDefault(selectedImo, 0) + 1
                             val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.1f) ?: 50f)
                             val spreadFactor = i * 2f
                             val angle = 0.5f
@@ -363,10 +367,11 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                             imoInstances.add(ImoInstance(Vector2(imoX, imoY), selectedImo))
                         }
 
-                        // 表示しない芋のスコアを計算
+                        // 表示しない芋のスコアと内訳を計算
                         for (i in displayImos until collectedImos) {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
+                            imoCounts[selectedImo] = imoCounts.getOrDefault(selectedImo, 0) + 1
                         }
 
                         game.score += totalPoints
