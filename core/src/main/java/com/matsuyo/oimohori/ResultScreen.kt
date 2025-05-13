@@ -18,7 +18,8 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
     private val pixelCamera = OrthographicCamera()
     private val shapeRenderer = ShapeRenderer()
     private val font = BitmapFont()
-    private val moguraTexture = Texture(Gdx.files.internal("mogura1.png"))
+    private val mogura2Texture = Texture(Gdx.files.internal("mogura2.png"))
+    private val mogura3Texture = Texture(Gdx.files.internal("mogura3.png"))
     private val imoTexture = Texture(Gdx.files.internal("normal_imo.png"))
     private val retryButtonTexture = Texture(Gdx.files.internal("retry_btn.png"))
     private val doubleButtonTexture = Texture(Gdx.files.internal("double_btn.png"))
@@ -29,6 +30,9 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
     private val buttonHeight = retryButtonTexture.height * buttonScale
     private val retryButton = Rectangle((1080f - 2 * buttonWidth - 50f) / 2, 1620f, buttonWidth, buttonHeight)
     private val doubleButton = Rectangle((1080f - 2 * buttonWidth - 50f) / 2 + buttonWidth + 50f, 1620f, buttonWidth, buttonHeight)
+    private var animationTimer = 0f
+    private val animationInterval = 0.5f // 0.5秒ごとに切り替え
+    private var isMogura2 = true // 現在のテクスチャ（true: mogura2, false: mogura3）
 
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
@@ -37,7 +41,8 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
         font.data.setScale(4.8f) // フォントサイズを3.8倍
-        moguraTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        mogura2Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        mogura3Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         imoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         retryButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         doubleButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
@@ -53,6 +58,14 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
     }
 
     override fun render(delta: Float) {
+        // アニメーションタイマーを更新
+        animationTimer += delta
+        if (animationTimer >= animationInterval) {
+            isMogura2 = !isMogura2
+            animationTimer = 0f
+            Gdx.app.log("ResultScreen", "Switched to ${if (isMogura2) "mogura2.png" else "mogura3.png"}")
+        }
+
         // 黒帯対策：ピクセル座標で画面クリア
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
@@ -83,8 +96,15 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
         game.batch.projectionMatrix = worldCamera.combined
         game.batch.begin()
 
-        // モグラ（y=650、中央）
-        game.batch.draw(moguraTexture, (1080f - moguraTexture.width * imageScale) / 2, 600f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
+        // モグラ（y=600、中央、アニメーション）
+        val currentMoguraTexture = if (isMogura2) mogura2Texture else mogura3Texture
+        game.batch.draw(
+            currentMoguraTexture,
+            (1080f - currentMoguraTexture.width * imageScale) / 2,
+            600f,
+            currentMoguraTexture.width * imageScale,
+            currentMoguraTexture.height * imageScale
+        )
 
         // さつまいも（y=300, x=300）とスコア（y=300, x=550）
         game.batch.draw(imoTexture, 300f, 150f, imoTexture.width * imoScale, imoTexture.height * imoScale)
@@ -119,7 +139,8 @@ class ResultScreen(private val game: GameMain, private val totalPoints: Int) : S
 
     override fun dispose() {
         font.dispose()
-        moguraTexture.dispose()
+        mogura2Texture.dispose()
+        mogura3Texture.dispose()
         imoTexture.dispose()
         retryButtonTexture.dispose()
         doubleButtonTexture.dispose()
