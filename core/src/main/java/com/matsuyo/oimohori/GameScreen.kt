@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.viewport.ExtendViewport
+import kotlin.math.min
 import kotlin.math.sin
 
 class GameScreen(private val game: GameMain) : ScreenAdapter() {
@@ -32,6 +33,8 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private var digTimer = 0f
     private val DIG_DURATION = 0.5f
     private var totalPoints = 0 // 今回のプレイで獲得したスコア
+    private val speed = 1000f
+    private val MAX_IMO_DISPLAY = 100 // 表示する芋の最大数
 
     // ツルハシ管理用のデータクラス
     private data class TuruhasiInstance(
@@ -236,11 +239,11 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         }
 
         game.batch.end()
-
+        // アニメーション速度
         if (moguraState == MoguraState.MOVING) {
-            moguraY += 500f * delta
+            moguraY += speed * delta
             imoInstances.forEach { imo ->
-                imo.position.y += 500f * delta
+                imo.position.y += speed * delta
             }
             if (collectedImos > 0) {
                 val lowestImoY = imoInstances.last().position.y
@@ -248,7 +251,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     moguraState = MoguraState.IDLE
                     moguraY = 580f
                     imoInstances.clear()
-                    initTuruhasi()  // ツルハシを再初期化
+                    initTuruhasi() // ツルハシを再初期化
                     game.setScreen(ResultScreen(game, totalPoints)) // totalPoints を渡す
                 }
             }
@@ -335,7 +338,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
 
                     // 上向きのスワイプ
                     if (swipeDir.y > 0.5f) {
-                        val swipeSpeed = 1500f  // 固定値または適切な計算方法を使用
+                        val swipeSpeed = 1500f // 固定値または適切な計算方法を使用
                         val bonus = if (swipeSpeed > 1000f) 2 else 1
                         collectedImos = game.moguraHarvest * game.turuhasiValue * bonus
 
@@ -343,7 +346,13 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         totalPoints = 0 // 今回のプレイのスコアをリセット
                         val tsutaY = moguraY - tsutaTexture.height
                         val tsutaCenterX = moguraX + (mogura2Texture.width - tsutaTexture.width) / 2f + tsutaTexture.width / 2f
-                        for (i in 0 until collectedImos) {
+
+                        // 表示する芋を最大100個に制限
+                        val displayImos = min(collectedImos, MAX_IMO_DISPLAY)
+                        Gdx.app.log("GameScreen", "Total imos: $collectedImos, Displaying: $displayImos")
+
+                        // 表示する芋の生成
+                        for (i in 0 until displayImos) {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
                             val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.1f) ?: 50f)
@@ -353,6 +362,13 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                             val imoX = tsutaCenterX - (textureCache[selectedImo.textureName]?.width?.times(imoScale)?.div(2f) ?: 50f) + offsetX
                             imoInstances.add(ImoInstance(Vector2(imoX, imoY), selectedImo))
                         }
+
+                        // 表示しない芋のスコアを計算
+                        for (i in displayImos until collectedImos) {
+                            val selectedImo = selectImoType(collectedImos)
+                            totalPoints += selectedImo.points
+                        }
+
                         game.score += totalPoints
                         moguraState = MoguraState.MOVING
                     }
