@@ -195,7 +195,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
             val turuhasiHeight = turuhasiTexture.height * turuhasiScale
             game.batch.draw(turuhasiTexture, turuhasiX, turuhasiY, turuhasiWidth, turuhasiHeight)
         }
-        font.draw(game.batch, "Score: ${game.score}", 50f, 1900f, 0f, Align.left, false)
+//        font.draw(game.batch, "Score: ${game.score}", 50f, 1900f, 0f, Align.left, false)
         game.batch.end()
 
         if (moguraState == MoguraState.MOVING) {
