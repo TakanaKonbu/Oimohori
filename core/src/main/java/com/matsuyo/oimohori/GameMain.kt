@@ -68,6 +68,13 @@ class GameMain : Game() {
         return ::pushSound.isInitialized
     }
 
+    // サウンド停止用のメソッド
+    fun stopSyuukakujiSound() {
+        if (::syuukakujiSound.isInitialized) {
+            syuukakujiSound.stop()
+        }
+    }
+
     override fun dispose() {
         batch.dispose()
         if (::bgm.isInitialized) bgm.dispose()

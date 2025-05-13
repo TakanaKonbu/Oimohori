@@ -67,7 +67,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
 
     private val imoTypes = listOf(
         ImoType("通常芋", "normal_imo.png", 5),
-        ImoType("シルバー芋", "silver_imo.png", 7, 30, 0.2f),
+        ImoType("シルバー芋", "silver_imo.png", 7, 30,  0.2f),
         ImoType("ゴールド芋", "gold_imo.png", 10, 40, 0.2f),
         ImoType("メラメラ芋", "fire_imo.png", 12, 50, 0.2f),
         ImoType("ヒエヒエ芋", "ice_imo.png", 12, 50, 0.2f),
@@ -237,6 +237,8 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     moguraY = 580f
                     imoInstances.clear()
                     initTuruhasi()
+                    // ResultScreen遷移前にsyuukakujiSoundを停止
+                    game.stopSyuukakujiSound()
                     game.setScreen(ResultScreen(game, totalPoints, collectedImos, imoCounts))
                 }
             }
