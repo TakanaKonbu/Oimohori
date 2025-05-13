@@ -8,8 +8,8 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.MathUtils
+import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
-import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.ExtendViewport
 import kotlin.math.sin
 
@@ -23,26 +23,41 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
     private val turuhasiTexture: Texture = Texture(Gdx.files.internal("turuhasi.png"))
     private val tsutaTexture: Texture = Texture(Gdx.files.internal("tsuta.png"))
     private val font = BitmapFont()
-    private var isTuruhasiDragging = false
-    private var turuhasiDragStart = Vector2()
-    private var turuhasiDragEnd = Vector2()
-    private var turuhasiX = 1080f / 2f - turuhasiTexture.width * 0.5f / 2f
-    private var turuhasiY = 1870f - turuhasiTexture.height * 0.5f
-    private var isMoguraDragging = false
-    private var moguraDragStart = Vector2()
-    private var moguraDragEnd = Vector2()
-    private var lastSwipeTime = 0f
-    private var swipeSpeed = 0f
     private var moguraState = MoguraState.IDLE
     private var moguraY = 580f
     private var collectedImos = 0
     private val imoScale = 0.5f
     private val moguraX = 1080f / 2f - mogura1Texture.width / 2f
     private val particles = mutableListOf<Particle>()
-    private var showTuruhasi = true
     private var digTimer = 0f
     private val DIG_DURATION = 0.5f
     private var totalPoints = 0 // 今回のプレイで獲得したスコア
+
+    // ツルハシ管理用のデータクラス
+    private data class TuruhasiInstance(
+        var x: Float,
+        var y: Float,
+        var isDragging: Boolean = false,
+        var isActive: Boolean = true,
+        var dragStart: Vector2 = Vector2(),
+        var dragEnd: Vector2 = Vector2(),
+        var lastSwipeTime: Float = 0f
+    )
+
+    // 複数ツルハシのリスト
+    private val turuhasiInstances = mutableListOf<TuruhasiInstance>()
+
+    // ツルハシのスケールとサイズ
+    private val turuhasiScale = 0.5f
+    private val turuhasiWidth = turuhasiTexture.width * turuhasiScale
+    private val turuhasiHeight = turuhasiTexture.height * turuhasiScale
+
+    // メインツルハシの位置（中央）- 常に存在する
+    private val mainTuruhasiX = 1080f / 2f - turuhasiWidth / 2f
+    private val mainTuruhasiY = 1870f - turuhasiHeight
+
+    // 左右のツルハシの位置オフセット
+    private val turuhasiOffsetX = 300f
 
     private data class ImoType(
         val name: String,
@@ -120,6 +135,27 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                 Gdx.app.error("GameScreen", "Failed to load ${imoType.textureName}: ${e.message}")
             }
         }
+
+        // ツルハシの初期化
+        initTuruhasi()
+    }
+
+    private fun initTuruhasi() {
+        turuhasiInstances.clear()
+
+        // 中央のツルハシ（常に表示）
+        turuhasiInstances.add(TuruhasiInstance(mainTuruhasiX, mainTuruhasiY))
+
+        // 解放されたツルハシを追加
+        if (game.turuhasiUnlockedCount >= 1) {
+            // 左側に1本目のツルハシを追加
+            turuhasiInstances.add(TuruhasiInstance(mainTuruhasiX - turuhasiOffsetX, mainTuruhasiY))
+        }
+
+        if (game.turuhasiUnlockedCount >= 2) {
+            // 右側に2本目のツルハシを追加
+            turuhasiInstances.add(TuruhasiInstance(mainTuruhasiX + turuhasiOffsetX, mainTuruhasiY))
+        }
     }
 
     override fun resize(width: Int, height: Int) {
@@ -168,8 +204,17 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
 
         game.batch.projectionMatrix = worldCamera.combined
         game.batch.begin()
+
+        // モグラの状態に応じた描画
         when (moguraState) {
-            MoguraState.IDLE, MoguraState.DIGGING -> {}
+            MoguraState.IDLE -> {
+                // ツルハシの描画
+                drawTuruhasi()
+            }
+            MoguraState.DIGGING -> {
+                // ツルハシの描画
+                drawTuruhasi()
+            }
             MoguraState.WAITING -> {
                 game.batch.draw(mogura1Texture, moguraX, moguraY)
             }
@@ -189,13 +234,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                 }
             }
         }
-        if (showTuruhasi) {
-            val turuhasiScale = 0.5f
-            val turuhasiWidth = turuhasiTexture.width * turuhasiScale
-            val turuhasiHeight = turuhasiTexture.height * turuhasiScale
-            game.batch.draw(turuhasiTexture, turuhasiX, turuhasiY, turuhasiWidth, turuhasiHeight)
-        }
-//        font.draw(game.batch, "Score: ${game.score}", 50f, 1900f, 0f, Align.left, false)
+
         game.batch.end()
 
         if (moguraState == MoguraState.MOVING) {
@@ -209,7 +248,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     moguraState = MoguraState.IDLE
                     moguraY = 580f
                     imoInstances.clear()
-                    showTuruhasi = true
+                    initTuruhasi()  // ツルハシを再初期化
                     game.setScreen(ResultScreen(game, totalPoints)) // totalPoints を渡す
                 }
             }
@@ -225,45 +264,78 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         handleInput(delta)
     }
 
+    private fun drawTuruhasi() {
+        // アクティブなツルハシだけを描画
+        turuhasiInstances.filter { it.isActive }.forEach { turuhasi ->
+            game.batch.draw(turuhasiTexture, turuhasi.x, turuhasi.y, turuhasiWidth, turuhasiHeight)
+        }
+    }
+
     private fun handleInput(delta: Float) {
         if (Gdx.input.isTouched) {
-            val touchX = Gdx.input.x.toFloat() * (1080f / Gdx.graphics.width)
-            val touchY = (Gdx.graphics.height - Gdx.input.y) * (1920f / Gdx.graphics.height)
+            // タッチ座標をワールド座標に変換
+            val touchPos = Vector2(Gdx.input.x.toFloat(), Gdx.input.y.toFloat())
+            viewport.unproject(touchPos)
+            val touchX = touchPos.x
+            val touchY = touchPos.y
+
+            Gdx.app.log("GameScreen", "Raw touch: x=${Gdx.input.x}, y=${Gdx.input.y}, World touch: x=$touchX, y=$touchY")
 
             if (moguraState == MoguraState.IDLE) {
-                if (!isTuruhasiDragging) {
-                    isTuruhasiDragging = true
-                    turuhasiDragStart.set(touchX, touchY)
-                    lastSwipeTime = 0f
-                } else {
-                    turuhasiDragEnd.set(touchX, touchY)
-                    lastSwipeTime += delta
-                    turuhasiY = touchY - (turuhasiTexture.height * 0.5f) / 2f
-                    turuhasiX = touchX - (turuhasiTexture.width * 0.5f) / 2f
+                // 各ツルハシのドラッグ処理
+                turuhasiInstances.filter { it.isActive }.forEach { turuhasi ->
+                    // ツルハシの当たり判定（スケール後のサイズを使用）
+                    val turuhasiBounds = Rectangle(turuhasi.x, turuhasi.y, turuhasiWidth, turuhasiHeight)
+                    Gdx.app.log("GameScreen", "Turuhasi bounds: x=${turuhasiBounds.x}, y=${turuhasiBounds.y}, width=${turuhasiBounds.width}, height=${turuhasiBounds.height}")
 
-                    if (turuhasiDragEnd.y < turuhasiDragStart.y && turuhasiY <= 650f) {
-                        swipeSpeed = turuhasiDragStart.dst(turuhasiDragEnd) / lastSwipeTime
-                        val particleCount = when {
-                            swipeSpeed > 2000f -> 50
-                            swipeSpeed > 1500f -> 30
-                            swipeSpeed > 1000f -> 20
-                            else -> 10
+                    if (!turuhasi.isDragging && turuhasiBounds.contains(touchX, touchY)) {
+                        Gdx.app.log("GameScreen", "Turuhasi touched at x=${turuhasi.x}, y=${turuhasi.y}")
+                        turuhasi.isDragging = true
+                        turuhasi.dragStart.set(touchX, touchY)
+                        turuhasi.lastSwipeTime = 0f
+                    } else if (!turuhasiBounds.contains(touchX, touchY)) {
+                        Gdx.app.log("GameScreen", "Touch missed turuhasi at x=${turuhasi.x}, y=${turuhasi.y}")
+                    }
+
+                    if (turuhasi.isDragging) {
+                        turuhasi.dragEnd.set(touchX, touchY)
+                        turuhasi.lastSwipeTime += delta
+                        turuhasi.y = touchY - turuhasiHeight / 2f
+                        turuhasi.x = touchX - turuhasiWidth / 2f
+                        Gdx.app.log("GameScreen", "Turuhasi dragging to x=${turuhasi.x}, y=${turuhasi.y}")
+
+                        // 下にスワイプして地面に到達したら
+                        if (turuhasi.dragEnd.y < turuhasi.dragStart.y && turuhasi.y <= 650f) {
+                            val swipeSpeed = turuhasi.dragStart.dst(turuhasi.dragEnd) / turuhasi.lastSwipeTime
+                            val particleCount = when {
+                                swipeSpeed > 2000f -> 50
+                                swipeSpeed > 1500f -> 30
+                                swipeSpeed > 1000f -> 20
+                                else -> 10
+                            }
+                            spawnParticles(particleCount, turuhasi.x + turuhasiWidth / 2f, 650f, swipeSpeed)
+                            turuhasi.isActive = false
+                            turuhasi.isDragging = false
+                            Gdx.app.log("GameScreen", "Turuhasi swiped at x=${turuhasi.x}, y=${turuhasi.y}")
+
+                            // すべてのツルハシがスワイプされたかチェック
+                            if (turuhasiInstances.none { it.isActive }) {
+                                Gdx.app.log("GameScreen", "All turuhasis swiped, transitioning to DIGGING")
+                                moguraState = MoguraState.DIGGING
+                            }
                         }
-                        spawnParticles(particleCount, turuhasiX + (turuhasiTexture.width * 0.5f) / 2f, 650f, swipeSpeed)
-                        moguraState = MoguraState.DIGGING
-                        resetTuruhasi()
                     }
                 }
             } else if (moguraState == MoguraState.WAITING) {
-                if (!isMoguraDragging) {
-                    isMoguraDragging = true
-                    moguraDragStart.set(touchX, touchY)
-                    lastSwipeTime = 0f
-                } else {
-                    moguraDragEnd.set(touchX, touchY)
-                    lastSwipeTime += delta
-                    if (moguraDragEnd.y > moguraDragStart.y) {
-                        swipeSpeed = turuhasiDragStart.dst(turuhasiDragEnd) / lastSwipeTime
+                // モグラのスワイプ処理
+                val moguraBounds = Rectangle(moguraX, moguraY, mogura1Texture.width.toFloat(), mogura1Texture.height.toFloat())
+
+                if (moguraBounds.contains(touchX, touchY)) {
+                    val swipeDir = Vector2(touchX, touchY).sub(Vector2(moguraX, moguraY)).nor()
+
+                    // 上向きのスワイプ
+                    if (swipeDir.y > 0.5f) {
+                        val swipeSpeed = 1500f  // 固定値または適切な計算方法を使用
                         val bonus = if (swipeSpeed > 1000f) 2 else 1
                         collectedImos = game.moguraHarvest * game.turuhasiValue * bonus
 
@@ -274,26 +346,31 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                         for (i in 0 until collectedImos) {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
-                            // y座標：間隔を狭める（0.1f）
                             val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.1f) ?: 50f)
-                            // x座標：ツタの中心から下に行くほど末広がりに配置（▲型）
-                            val spreadFactor = i * 2f // 1つ下の芋ごとに2fずつ広がる
-                            val angle = 0.5f // 滑らかに広がる角度（ラジアン）
-                            val offsetX = spreadFactor * sin(i * angle) // 滑らかに左右に広がる
+                            val spreadFactor = i * 2f
+                            val angle = 0.5f
+                            val offsetX = spreadFactor * sin(i * angle)
                             val imoX = tsutaCenterX - (textureCache[selectedImo.textureName]?.width?.times(imoScale)?.div(2f) ?: 50f) + offsetX
                             imoInstances.add(ImoInstance(Vector2(imoX, imoY), selectedImo))
                         }
                         game.score += totalPoints
                         moguraState = MoguraState.MOVING
-                        showTuruhasi = false
                     }
                 }
             }
         } else {
-            isTuruhasiDragging = false
-            isMoguraDragging = false
-            if (moguraState == MoguraState.IDLE) {
-                resetTuruhasi()
+            // タッチが終了したらフラグをリセット
+            turuhasiInstances.forEach {
+                if (it.isDragging && it.isActive) {
+                    // スワイプが中断された場合、元の位置に戻す
+                    it.isDragging = false
+                    when (turuhasiInstances.indexOf(it)) {
+                        0 -> it.x = mainTuruhasiX
+                        1 -> it.x = mainTuruhasiX - turuhasiOffsetX
+                        2 -> it.x = mainTuruhasiX + turuhasiOffsetX
+                    }
+                    it.y = mainTuruhasiY
+                }
             }
         }
     }
@@ -336,11 +413,6 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                 iterator.remove()
             }
         }
-    }
-
-    private fun resetTuruhasi() {
-        turuhasiX = 1080f / 2f - turuhasiTexture.width * 0.5f / 2f
-        turuhasiY = 1870f - turuhasiTexture.height * 0.5f
     }
 
     override fun dispose() {
