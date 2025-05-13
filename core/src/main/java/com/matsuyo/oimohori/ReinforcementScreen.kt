@@ -34,7 +34,6 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
     private val labelImageScale = 1.0f
     private val buttonWidth = upgradeButtonTexture.width * buttonScale
     private val buttonHeight = upgradeButtonTexture.height * buttonScale
-    // 変更: ボタンの座標を中央に移動
     private val moguraUpgradeButton = Rectangle(640f, 1350f, buttonWidth, buttonHeight)
     private val turuhasiValueButton = Rectangle(640f, 900f, buttonWidth, buttonHeight)
     private val turuhasiUnlockButton = Rectangle(640f, 450f, buttonWidth, buttonHeight)
@@ -101,7 +100,6 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
         game.batch.draw(backToTopTexture, 50f, 1900f - backToTopTexture.height * labelScale, backToTopTexture.width * labelImageScale, backToTopTexture.height * labelImageScale)
 
         // 強化項目（Mogura）
-        // 変更: X座標を100f、Y座標を250f下げる
         game.batch.draw(moguraTexture, 100f, 1400f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
         game.batch.draw(syuukakuTexture, 170f, 1350f - syuukakuTexture.height * labelScale / 2, syuukakuTexture.width * labelScale, syuukakuTexture.height * labelScale)
         game.batch.draw(usePointTexture, 640f, 1450f + buttonHeight + 50f - usePointTexture.height * labelScale, usePointTexture.width * labelImageScale, usePointTexture.height * labelImageScale)
@@ -144,11 +142,17 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
             if (backButton.contains(touchX, touchY)) {
                 Gdx.app.log("ReinforcementScreen", "Back to Top button tapped")
+                if (game.isPushSoundInitialized()) {
+                    game.pushSound.play()
+                }
                 game.setScreen(TitleScreen(game))
             }
 
             if (moguraUpgradeButton.contains(touchX, touchY) && game.score >= game.moguraCost) {
                 Gdx.app.log("ReinforcementScreen", "Mogura upgrade button tapped")
+                if (game.isPushSoundInitialized()) {
+                    game.pushSound.play()
+                }
                 game.score -= game.moguraCost
                 game.moguraHarvest = floor(game.moguraHarvest * 1.5f).toInt()
                 game.moguraCost = floor(game.moguraCost * 1.25f).toInt()
@@ -156,6 +160,9 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
             if (turuhasiValueButton.contains(touchX, touchY) && game.score >= game.turuhasiValueCost) {
                 Gdx.app.log("ReinforcementScreen", "Tsuruhasi value button tapped")
+                if (game.isPushSoundInitialized()) {
+                    game.pushSound.play()
+                }
                 game.score -= game.turuhasiValueCost
                 game.turuhasiLevel = floor(game.turuhasiLevel * 1.5f).toInt()
                 game.turuhasiValueCost = floor(game.turuhasiValueCost * 1.25f).toInt()
@@ -164,6 +171,9 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
             if (turuhasiUnlockButton.contains(touchX, touchY) && game.score >= game.turuhasiUnlockCost && game.turuhasiUnlockedCount < 2) {
                 Gdx.app.log("ReinforcementScreen", "Tsuruhasi unlock button tapped")
+                if (game.isPushSoundInitialized()) {
+                    game.pushSound.play()
+                }
                 game.score -= game.turuhasiUnlockCost
                 game.turuhasiUnlockedCount += 1
                 if (game.turuhasiUnlockedCount == 1) {

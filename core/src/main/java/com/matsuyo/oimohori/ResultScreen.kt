@@ -39,7 +39,7 @@ class ResultScreen(
     private val breakdownButton = Rectangle((1080f - 3 * buttonWidth - 100f) / 2 + 2 * (buttonWidth + 50f), 1620f, buttonWidth, buttonHeight)
     private var animationTimer = 0f
     private val animationInterval = 0.5f // 0.5秒ごとに切り替え
-    private var isMogura2 = true // 現在のテクスチャ（true: mogura2, false: mogura3）
+    private var isMogura2 = true // 現在のเทกซ์เจอร์（true: mogura2, false: mogura3）
 
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
@@ -47,13 +47,18 @@ class ResultScreen(
         pixelCamera.setToOrtho(false, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
-        font.data.setScale(4.8f) // フォントサイズを3.8倍
+        font.data.setScale(4.8f)
         mogura2Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         mogura3Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         imoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         retryButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         doubleButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         breakdownButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+
+        // ResultScreen表示時に効果音を再生
+        if (game.isResultSoundInitialized()) {
+            game.resultSound.play()
+        }
     }
 
     override fun resize(width: Int, height: Int) {
@@ -141,9 +146,21 @@ class ResultScreen(
 
             if (retryButton.contains(touchX, touchY)) {
                 Gdx.app.log("ResultScreen", "Retry button tapped")
+                if (game.isPushSoundInitialized()) {
+                    game.pushSound.play()
+                }
                 game.setScreen(TitleScreen(game))
+            } else if (doubleButton.contains(touchX, touchY)) {
+                Gdx.app.log("ResultScreen", "Double button tapped")
+                if (game.isPushSoundInitialized()) {
+                    game.pushSound.play()
+                }
+                // ダブルボタンの処理（未実装の場合、ログのみ）
             } else if (breakdownButton.contains(touchX, touchY)) {
                 Gdx.app.log("ResultScreen", "Breakdown button tapped")
+                if (game.isPushSoundInitialized()) {
+                    game.pushSound.play()
+                }
                 game.setScreen(BreakdownScreen(game, collectedImos, imoCounts, this))
             }
         }
