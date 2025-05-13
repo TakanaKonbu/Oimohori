@@ -167,7 +167,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         val screenHeight = Gdx.graphics.height.toFloat()
         val screenWidth = Gdx.graphics.width.toFloat()
-        val midY = screenHeight / 2f
+        val midY = screenHeight * 0.3385417f
         shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
         shapeRenderer.rect(0f, 0f, screenWidth, midY)
         shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
