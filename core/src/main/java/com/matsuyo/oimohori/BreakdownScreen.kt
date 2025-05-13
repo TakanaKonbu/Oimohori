@@ -11,6 +11,8 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.ExtendViewport
+import kotlin.math.log10
+import kotlin.math.max
 
 class BreakdownScreen(
     private val game: GameMain,
@@ -27,7 +29,7 @@ class BreakdownScreen(
     private var syuukakuTexture: Texture? = null
     private val textureCache = mutableMapOf<String, Texture>()
     private val buttonScale = 0.8f
-    private val imoScale = 0.3f
+    private val imoScale = 0.2f
     private val buttonWidth = backButtonTexture.width * buttonScale
     private val buttonHeight = backButtonTexture.height * buttonScale
     private val backButton = Rectangle(50f, 1820f - buttonHeight, buttonWidth, buttonHeight)
@@ -115,16 +117,19 @@ class BreakdownScreen(
             game.batch.draw(
                 syuukakuTexture,
                 xPosSyuukaku + 5,
-                yPosHeader  - 25,
+                yPosHeader - 25,
                 syuukakuWidth,
                 syuukakuHeight
             )
             font.data.setScale(4.8f)
             font.setColor(0f, 0f, 0f, 1f) // 黒
+            // 収穫数の桁数に応じて間隔を調整
+            val digitCount = max(1, log10(collectedImos.toFloat()).toInt() + 1)
+            val offset = 50f + digitCount * 10f
             font.draw(
                 game.batch,
                 "$collectedImos",
-                xPosSyuukaku + syuukakuWidth + 20f,
+                xPosSyuukaku + syuukakuWidth + offset,
                 yPosHeader + syuukakuHeight / 2,
                 0f,
                 Align.center,
@@ -145,7 +150,7 @@ class BreakdownScreen(
                 Align.center,
                 false
             )
-            font.data.setScale(3.8f)
+            font.data.setScale(2.8f)
             font.setColor(1f, 1f, 1f, 1f) // 元の色（白）にリセット
         }
 
@@ -158,7 +163,7 @@ class BreakdownScreen(
                 1 -> 400f // 中央列
                 else -> 700f // 右列
             }
-            val yPos = 1600f - row * 200f // 行ごとに200ピクセル下
+            val yPos = 1600f - row * 180f // 行ごとに180ピクセル下
 
             val texture = textureCache[imoType.textureName] ?: textureCache["normal_imo.png"]
             if (texture != null) {
