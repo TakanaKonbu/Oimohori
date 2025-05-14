@@ -44,7 +44,7 @@ class BreakdownScreen(
 
         // フォントの初期設定
         font.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
-        fontWhite.data.setScale(0.7f) // 白色フォントのスケールを0.2に設定
+        fontWhite.data.setScale(0.7f) // 白色フォントのスケールを0.7に設定
         fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
 
         backButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
