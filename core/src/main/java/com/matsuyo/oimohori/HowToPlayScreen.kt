@@ -17,10 +17,14 @@ class HowToPlayScreen(private val game: GameMain) : ScreenAdapter() {
     private val shapeRenderer = ShapeRenderer()
     private val howToPlayTexture = Texture(Gdx.files.internal("how_to_play.png"))
     private val backToTopTexture = Texture(Gdx.files.internal("back_to_top.png"))
+    private val mogura2Texture = Texture(Gdx.files.internal("mogura2.png"))
+    private val mogura3Texture = Texture(Gdx.files.internal("mogura3.png"))
+    private var elapsedTime = 0f
+    private var showMogura2 = true
     private val backButtonScale = 1.0f
     private val backButton = Rectangle(
         50f,
-        1900f - backToTopTexture.height * backButtonScale,
+        1800f - backToTopTexture.height * backButtonScale,
         backToTopTexture.width * backButtonScale,
         backToTopTexture.height * backButtonScale
     )
@@ -30,6 +34,8 @@ class HowToPlayScreen(private val game: GameMain) : ScreenAdapter() {
         worldCamera.update()
         howToPlayTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         backToTopTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        mogura2Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        mogura3Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
         // ボタン領域のデバッグログ
         Gdx.app.log("HowToPlayScreen", "Back Button: x=${backButton.x}, y=${backButton.y}, width=${backButton.width}, height=${backButton.height}")
@@ -46,20 +52,15 @@ class HowToPlayScreen(private val game: GameMain) : ScreenAdapter() {
     }
 
     override fun render(delta: Float) {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+        // Update elapsed time and toggle between mogura2 and mogura3 every second
+        elapsedTime += delta
+        if (elapsedTime >= 1f) {
+            showMogura2 = !showMogura2
+            elapsedTime -= 1f
+        }
 
-        // デバイス画面全体をピクセル座標で塗る（黒帯対策）
-        shapeRenderer.projectionMatrix = pixelCamera.combined
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-        val screenHeight = Gdx.graphics.height.toFloat()
-        val screenWidth = Gdx.graphics.width.toFloat()
-        val midY = 171f
-        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f) // 土の色
-        shapeRenderer.rect(0f, 0f, screenWidth, midY)
-        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f) // 空の色
-        shapeRenderer.rect(0f, midY, screenWidth, screenHeight - midY)
-        shapeRenderer.end()
+        Gdx.gl.glClearColor(0.3608f, 0.8824f, 0.9020f, 1f)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
         viewport.apply()
 
@@ -69,7 +70,7 @@ class HowToPlayScreen(private val game: GameMain) : ScreenAdapter() {
         game.batch.draw(
             howToPlayTexture,
             (1080f - howToPlayTexture.width) / 2f,
-            (1920f - howToPlayTexture.height) / 2f,
+            (1820f - howToPlayTexture.height) / 2f,
             howToPlayTexture.width.toFloat(),
             howToPlayTexture.height.toFloat()
         )
@@ -80,6 +81,15 @@ class HowToPlayScreen(private val game: GameMain) : ScreenAdapter() {
             backButton.y,
             backButton.width,
             backButton.height
+        )
+        // mogura2.png or mogura3.pngを画面下部中央に配置
+        val moguraTexture = if (showMogura2) mogura2Texture else mogura3Texture
+        game.batch.draw(
+            moguraTexture,
+            (1080f - moguraTexture.width) / 2f, // 中央揃え
+            50f, // 画面下部（y=50で底から少し浮かせる）
+            moguraTexture.width.toFloat(),
+            moguraTexture.height.toFloat()
         )
         game.batch.end()
 
@@ -108,6 +118,8 @@ class HowToPlayScreen(private val game: GameMain) : ScreenAdapter() {
     override fun dispose() {
         howToPlayTexture.dispose()
         backToTopTexture.dispose()
+        mogura2Texture.dispose()
+        mogura3Texture.dispose()
         shapeRenderer.dispose()
     }
 }

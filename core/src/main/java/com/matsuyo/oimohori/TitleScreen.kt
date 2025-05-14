@@ -58,19 +58,26 @@ class TitleScreen(private val game: GameMain) : ScreenAdapter() {
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
-        // デバイス画面全体をピクセル座標で塗る（黒帯対策）
         shapeRenderer.projectionMatrix = pixelCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         val screenHeight = Gdx.graphics.height.toFloat()
         val screenWidth = Gdx.graphics.width.toFloat()
-        val midY = 342f
-        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f) // 土の色
+        val midY = screenHeight * 0.3385417f
+        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
         shapeRenderer.rect(0f, 0f, screenWidth, midY)
-        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f) // 空の色
+        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
         shapeRenderer.rect(0f, midY, screenWidth, screenHeight - midY)
         shapeRenderer.end()
 
         viewport.apply()
+
+        shapeRenderer.projectionMatrix = worldCamera.combined
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
+        shapeRenderer.rect(0f, 0f, 1080f, 1920f)
+        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
+        shapeRenderer.rect(0f, 0f, 1080f, 650f)
+        shapeRenderer.end()
 
         game.batch.projectionMatrix = worldCamera.combined
         game.batch.begin()

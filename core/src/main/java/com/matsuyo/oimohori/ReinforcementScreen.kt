@@ -37,7 +37,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
     private val moguraUpgradeButton = Rectangle(640f, 1350f, buttonWidth, buttonHeight)
     private val turuhasiValueButton = Rectangle(640f, 900f, buttonWidth, buttonHeight)
     private val turuhasiUnlockButton = Rectangle(640f, 450f, buttonWidth, buttonHeight)
-    private val backButton = Rectangle(50f, 1900f - 50f, 300f, 50f)
+    private val backButton = Rectangle(50f, 1800f - 50f, 300f, 50f)
 
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
@@ -97,7 +97,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
         game.batch.begin()
 
         // Back to Top
-        game.batch.draw(backToTopTexture, 50f, 1900f - backToTopTexture.height * labelScale, backToTopTexture.width * labelImageScale, backToTopTexture.height * labelImageScale)
+        game.batch.draw(backToTopTexture, 50f, 1800f - backToTopTexture.height * labelScale, backToTopTexture.width * labelImageScale, backToTopTexture.height * labelImageScale)
 
         // 強化項目（Mogura）
         game.batch.draw(moguraTexture, 100f, 1400f, moguraTexture.width * imageScale, moguraTexture.height * imageScale)
