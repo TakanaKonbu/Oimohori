@@ -23,6 +23,7 @@ class ResultScreen(
     private val pixelCamera = OrthographicCamera()
     private val shapeRenderer = ShapeRenderer()
     private val font = BitmapFont()
+    private val fontWhite = BitmapFont(Gdx.files.internal("font_white.fnt")) // 白色フォントをロード
     private val mogura2Texture = Texture(Gdx.files.internal("mogura2.png"))
     private val mogura3Texture = Texture(Gdx.files.internal("mogura3.png"))
     private val imoTexture = Texture(Gdx.files.internal("normal_imo.png"))
@@ -39,7 +40,7 @@ class ResultScreen(
     private val breakdownButton = Rectangle((1080f - 3 * buttonWidth - 100f) / 2 + 2 * (buttonWidth + 50f), 1620f, buttonWidth, buttonHeight)
     private var animationTimer = 0f
     private val animationInterval = 0.5f // 0.5秒ごとに切り替え
-    private var isMogura2 = true // 現在のเทกซ์เจอร์（true: mogura2, false: mogura3）
+    private var isMogura2 = true
 
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
@@ -48,6 +49,8 @@ class ResultScreen(
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
         font.data.setScale(4.8f)
+        fontWhite.data.setScale(1.0f) // 白色フォントのスケールを1.0に設定
+        fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
         mogura2Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         mogura3Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         imoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
@@ -120,8 +123,8 @@ class ResultScreen(
         )
 
         // さつまいも（y=300, x=300）とスコア（y=300, x=550）
-        game.batch.draw(imoTexture, 300f, 150f, imoTexture.width * imoScale, imoTexture.height * imoScale)
-        font.draw(game.batch, "$totalPoints", 550f, 300f, 0f, Align.left, false)
+        game.batch.draw(imoTexture, 200f, 150f, imoTexture.width * imoScale, imoTexture.height * imoScale)
+        fontWhite.draw(game.batch, "${totalPoints}pt GET", 450f, 300f, 0f, Align.left, false) // font_whiteを使用
 
         // ボタン（y=1620、中央）
         game.batch.draw(retryButtonTexture, retryButton.x, retryButton.y, retryButton.width, retryButton.height)
@@ -168,6 +171,7 @@ class ResultScreen(
 
     override fun dispose() {
         font.dispose()
+        fontWhite.dispose() // font_whiteのリソース解放を追加
         mogura2Texture.dispose()
         mogura3Texture.dispose()
         imoTexture.dispose()

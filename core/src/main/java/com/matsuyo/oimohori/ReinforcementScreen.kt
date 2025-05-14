@@ -11,14 +11,15 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.ExtendViewport
-import kotlin.math.floor
 
 class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
     private val worldCamera = OrthographicCamera()
     private val viewport = ExtendViewport(1080f, 1920f, worldCamera)
     private val pixelCamera = OrthographicCamera()
     private val shapeRenderer = ShapeRenderer()
-    private val font = BitmapFont()
+    // フォントをassetsからロード
+    private val font = BitmapFont(Gdx.files.internal("font.fnt"))
+    private val fontWhite = BitmapFont(Gdx.files.internal("font_white.fnt")) // 白色フォントをロード
     private val upgradeButtonTexture = Texture(Gdx.files.internal("upgrade_btn.png"))
     private val moguraTexture = Texture(Gdx.files.internal("mogura1.png"))
     private val turuhasiTexture = Texture(Gdx.files.internal("turuhasi.png"))
@@ -45,7 +46,15 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
         pixelCamera.setToOrtho(false, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
-        font.data.setScale(3.8f)
+
+        // フォントのスケールとフィルタリングを設定
+        font.data.setScale(0.7f) // 72pxフォントを小さくスケーリング
+        font.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
+
+        // 白色フォントの設定
+        fontWhite.data.setScale(1.0f) // スケールを1.0に設定
+        fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
+
         upgradeButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         moguraTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         turuhasiTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
@@ -124,7 +133,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
         // さつまいもとスコア
         game.batch.draw(imoTexture, 300f, 10f, imoTexture.width * imoScale, imoTexture.height * imoScale)
-        font.draw(game.batch, "${game.score}pt", 500f, 150f, 0f, Align.left, false)
+        fontWhite.draw(game.batch, "${game.score}pt", 500f, 150f, 0f, Align.left, false) // font_whiteを使用
 
         game.batch.end()
 
@@ -154,8 +163,8 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                     game.pushSound.play()
                 }
                 game.score -= game.moguraCost
-                game.moguraHarvest = floor(game.moguraHarvest * 1.5f).toInt()
-                game.moguraCost = floor(game.moguraCost * 1.25f).toInt()
+                game.moguraHarvest = (game.moguraHarvest * 1.5f).toInt()
+                game.moguraCost = (game.moguraCost * 1.25f).toInt()
             }
 
             if (turuhasiValueButton.contains(touchX, touchY) && game.score >= game.turuhasiValueCost) {
@@ -164,8 +173,8 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                     game.pushSound.play()
                 }
                 game.score -= game.turuhasiValueCost
-                game.turuhasiLevel = floor(game.turuhasiLevel * 1.5f).toInt()
-                game.turuhasiValueCost = floor(game.turuhasiValueCost * 1.25f).toInt()
+                game.turuhasiLevel = (game.turuhasiLevel * 1.5f).toInt()
+                game.turuhasiValueCost = (game.turuhasiValueCost * 1.25f).toInt()
                 game.updateTuruhasiValue()
             }
 
@@ -188,6 +197,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
 
     override fun dispose() {
         font.dispose()
+        fontWhite.dispose() // font_whiteのリソース解放を追加
         upgradeButtonTexture.dispose()
         moguraTexture.dispose()
         turuhasiTexture.dispose()

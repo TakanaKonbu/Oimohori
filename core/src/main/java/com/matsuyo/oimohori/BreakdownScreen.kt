@@ -24,7 +24,8 @@ class BreakdownScreen(
     private val viewport = ExtendViewport(1080f, 1920f, worldCamera)
     private val pixelCamera = OrthographicCamera()
     private val shapeRenderer = ShapeRenderer()
-    private val font = BitmapFont()
+    private val font = BitmapFont(Gdx.files.internal("font.fnt")) // 黒色フォント
+    private val fontWhite = BitmapFont(Gdx.files.internal("font_white.fnt")) // 白色フォント
     private val backButtonTexture = Texture(Gdx.files.internal("back_btn.png"))
     private var syuukakuTexture: Texture? = null
     private val textureCache = mutableMapOf<String, Texture>()
@@ -40,7 +41,12 @@ class BreakdownScreen(
         pixelCamera.setToOrtho(false, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
-        font.data.setScale(3.8f)
+
+        // フォントの初期設定
+        font.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
+        fontWhite.data.setScale(0.7f) // 白色フォントのスケールを0.2に設定
+        fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
+
         backButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
         // syuukakusuu.png の読み込み
@@ -121,8 +127,8 @@ class BreakdownScreen(
                 syuukakuWidth,
                 syuukakuHeight
             )
-            font.data.setScale(4.8f)
-            font.setColor(0f, 0f, 0f, 1f) // 黒
+            font.data.setScale(1.0f) // スケールを1.0に設定
+            font.setColor(0f, 0f, 0f, 1f) // 黒色（デフォルト）
             // 収穫数の桁数に応じて間隔を調整
             val digitCount = max(1, log10(collectedImos.toFloat()).toInt() + 1)
             val offset = 50f + digitCount * 10f
@@ -135,12 +141,10 @@ class BreakdownScreen(
                 Align.center,
                 false
             )
-            font.data.setScale(3.8f)
-            font.setColor(1f, 1f, 1f, 1f) // 元の色（白）にリセット
         } else {
             // フォールバック：収穫数を中央に表示
-            font.data.setScale(4.8f)
-            font.setColor(0f, 0f, 0f, 1f) // 黒
+            font.data.setScale(1.0f) // スケールを1.0に設定
+            font.setColor(0f, 0f, 0f, 1f) // 黒色（デフォルト）
             font.draw(
                 game.batch,
                 "収穫: $collectedImos",
@@ -150,8 +154,6 @@ class BreakdownScreen(
                 Align.center,
                 false
             )
-            font.data.setScale(2.8f)
-            font.setColor(1f, 1f, 1f, 1f) // 元の色（白）にリセット
         }
 
         // 芋ごとの内訳（y=1600から開始、3列表示）
@@ -174,7 +176,7 @@ class BreakdownScreen(
                     texture.width * imoScale,
                     texture.height * imoScale
                 )
-                font.draw(
+                fontWhite.draw(
                     game.batch,
                     "$count",
                     xPos + texture.width * imoScale + 20f,
@@ -211,6 +213,7 @@ class BreakdownScreen(
 
     override fun dispose() {
         font.dispose()
+        fontWhite.dispose() // font_whiteのリソース解放を追加
         backButtonTexture.dispose()
         syuukakuTexture?.dispose()
         textureCache.values.forEach { it.dispose() }
