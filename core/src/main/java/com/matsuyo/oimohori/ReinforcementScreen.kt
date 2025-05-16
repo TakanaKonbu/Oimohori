@@ -179,7 +179,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                 game.score -= game.turuhasiUnlockCost
                 game.turuhasiUnlockedCount += 1
                 if (game.turuhasiUnlockedCount == 1) {
-                    game.turuhasiUnlockCost = 700
+                    game.turuhasiUnlockCost = 1000
                 } else if (game.turuhasiUnlockedCount == 2) {
                     game.turuhasiUnlockCost = 0
                 }

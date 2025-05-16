@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 
 class GameMain : Game() {
     lateinit var batch: SpriteBatch
-    var score = 5000
+    var score = 0
     var moguraHarvest = 1
     var turuhasiLevel = 3
     var turuhasiValue = 3
@@ -74,14 +74,14 @@ class GameMain : Game() {
 
     // ゲーム状態を読み込む
     private fun loadGameState() {
-        score = prefs.getInteger("score", 5000)
+        score = prefs.getInteger("score", 0)
         moguraHarvest = prefs.getInteger("moguraHarvest", 1)
         turuhasiLevel = prefs.getInteger("turuhasiLevel", 3)
         turuhasiValue = prefs.getInteger("turuhasiValue", 3)
-        moguraCost = prefs.getInteger("moguraCost", 50)
-        turuhasiValueCost = prefs.getInteger("turuhasiValueCost", 50)
+        moguraCost = prefs.getInteger("moguraCost", 30)
+        turuhasiValueCost = prefs.getInteger("turuhasiValueCost", 40)
         turuhasiUnlockedCount = prefs.getInteger("turuhasiUnlockedCount", 0)
-        turuhasiUnlockCost = prefs.getInteger("turuhasiUnlockCost", 350)
+        turuhasiUnlockCost = prefs.getInteger("turuhasiUnlockCost", 500)
 
         // unlockedImosを読み込む
         val imoNames = prefs.getString("unlockedImos", "").split(",").filter { it.isNotEmpty() }
