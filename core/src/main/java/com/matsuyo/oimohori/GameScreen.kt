@@ -65,9 +65,9 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
         val probability: Float = 1.0f
     )
 
-    private val imoTypes = listOf(
+    val imoTypes = listOf(
         ImoType("通常芋", "normal_imo.png", 5),
-        ImoType("シルバー芋", "silver_imo.png", 7, 100,  0.2f),
+        ImoType("シルバー芋", "silver_imo.png", 7, 100, 0.2f),
         ImoType("ゴールド芋", "gold_imo.png", 10, 100, 0.2f),
         ImoType("メラメラ芋", "fire_imo.png", 12, 250, 0.2f),
         ImoType("ヒエヒエ芋", "ice_imo.png", 12, 250, 0.2f),
@@ -343,7 +343,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
                             imoCounts[selectedImo] = imoCounts.getOrDefault(selectedImo, 0) + 1
-                            game.unlockedImos.add(selectedImo) // 獲得した芋を記録
+                            game.unlockImo(selectedImo) // 芋をアンロックして保存
                             val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.1f) ?: 50f)
                             val spreadFactor = i * 2f
                             val angle = 0.5f
@@ -356,10 +356,10 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
                             imoCounts[selectedImo] = imoCounts.getOrDefault(selectedImo, 0) + 1
-                            game.unlockedImos.add(selectedImo) // 獲得した芋を記録
+                            game.unlockImo(selectedImo) // 芋をアンロックして保存
                         }
 
-                        game.score += totalPoints
+                        game.updateScore(game.score + totalPoints) // スコアを更新して保存
                         moguraState = MoguraState.MOVING
                     }
                 }
