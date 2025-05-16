@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 
 class GameMain : Game() {
     lateinit var batch: SpriteBatch
-    var score = 0
+    var score = 5000
     var moguraHarvest = 1
     var turuhasiLevel = 3
     var turuhasiValue = 3
@@ -17,7 +17,7 @@ class GameMain : Game() {
     var turuhasiValueCost = 50
     var turuhasiUnlockedCount = 0
     var turuhasiUnlockCost = 350
-    val unlockedImos = mutableSetOf<GameScreen.ImoType>()
+    val unlockedImos = mutableSetOf<ImoType>()
 
     // オーディオリソース
     lateinit var bgm: Music
@@ -50,7 +50,7 @@ class GameMain : Game() {
             Gdx.app.error("GameMain", "Failed to load sound effects: ${e.message}")
         }
 
-        setScreen(TitleScreen(this)) // 正しくGameMainのインスタンスを渡す
+        setScreen(TitleScreen(this))
     }
 
     // ゲーム状態を保存
@@ -74,21 +74,20 @@ class GameMain : Game() {
 
     // ゲーム状態を読み込む
     private fun loadGameState() {
-        score = prefs.getInteger("score", 0)
+        score = prefs.getInteger("score", 5000)
         moguraHarvest = prefs.getInteger("moguraHarvest", 1)
         turuhasiLevel = prefs.getInteger("turuhasiLevel", 3)
         turuhasiValue = prefs.getInteger("turuhasiValue", 3)
-        moguraCost = prefs.getInteger("moguraCost", 30)
-        turuhasiValueCost = prefs.getInteger("turuhasiValueCost", 40)
+        moguraCost = prefs.getInteger("moguraCost", 50)
+        turuhasiValueCost = prefs.getInteger("turuhasiValueCost", 50)
         turuhasiUnlockedCount = prefs.getInteger("turuhasiUnlockedCount", 0)
         turuhasiUnlockCost = prefs.getInteger("turuhasiUnlockCost", 500)
 
         // unlockedImosを読み込む
         val imoNames = prefs.getString("unlockedImos", "").split(",").filter { it.isNotEmpty() }
-        val imoTypes = GameScreen(this).imoTypes // GameScreenにthisを渡す
         unlockedImos.clear()
         imoNames.forEach { textureName ->
-            imoTypes.find { it.textureName == textureName }?.let { unlockedImos.add(it) }
+            ImoConfig.imoTypes.find { it.textureName == textureName }?.let { unlockedImos.add(it) }
         }
 
         Gdx.app.log("GameMain", "Game state loaded: score=$score, unlockedImos=${unlockedImos.size}")
@@ -106,7 +105,7 @@ class GameMain : Game() {
     }
 
     // 芋をアンロック
-    fun unlockImo(imoType: GameScreen.ImoType) {
+    fun unlockImo(imoType: ImoType) {
         unlockedImos.add(imoType)
         saveGameState()
     }

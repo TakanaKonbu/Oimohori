@@ -17,7 +17,7 @@ import kotlin.math.max
 class BreakdownScreen(
     private val game: GameMain,
     private val collectedImos: Int,
-    private val imoCounts: Map<GameScreen.ImoType, Int>,
+    private val imoCounts: Map<ImoType, Int>,
     private val resultScreen: ResultScreen
 ) : ScreenAdapter() {
     private val worldCamera = OrthographicCamera()
@@ -43,9 +43,9 @@ class BreakdownScreen(
         pixelCamera.update()
 
         // フォントの初期設定
-        font.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
-        fontWhite.data.setScale(0.7f) // 白色フォントのスケールを0.7に設定
-        fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
+        font.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        fontWhite.data.setScale(0.7f)
+        fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
         backButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
@@ -59,7 +59,7 @@ class BreakdownScreen(
         }
 
         // 芋のテクスチャをキャッシュ
-        imoCounts.keys.forEach { imoType ->
+        ImoConfig.imoTypes.forEach { imoType ->
             try {
                 val texture = Texture(Gdx.files.internal(imoType.textureName)).apply {
                     setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
@@ -127,8 +127,8 @@ class BreakdownScreen(
                 syuukakuWidth,
                 syuukakuHeight
             )
-            font.data.setScale(1.0f) // スケールを1.0に設定
-            font.setColor(0f, 0f, 0f, 1f) // 黒色（デフォルト）
+            font.data.setScale(1.0f)
+            font.setColor(0f, 0f, 0f, 1f)
             // 収穫数の桁数に応じて間隔を調整
             val digitCount = max(1, log10(collectedImos.toFloat()).toInt() + 1)
             val offset = 50f + digitCount * 10f
@@ -143,8 +143,8 @@ class BreakdownScreen(
             )
         } else {
             // フォールバック：収穫数を中央に表示
-            font.data.setScale(1.0f) // スケールを1.0に設定
-            font.setColor(0f, 0f, 0f, 1f) // 黒色（デフォルト）
+            font.data.setScale(1.0f)
+            font.setColor(0f, 0f, 0f, 1f)
             font.draw(
                 game.batch,
                 "収穫: $collectedImos",
@@ -201,7 +201,6 @@ class BreakdownScreen(
             val touchX = touchPos.x
             val touchY = touchPos.y
 
-            // タッチ座標のデバッグログ
             Gdx.app.log("BreakdownScreen", "Touch: x=$touchX, y=$touchY")
 
             if (backButton.contains(touchX, touchY)) {
@@ -213,7 +212,7 @@ class BreakdownScreen(
 
     override fun dispose() {
         font.dispose()
-        fontWhite.dispose() // font_whiteのリソース解放を追加
+        fontWhite.dispose()
         backButtonTexture.dispose()
         syuukakuTexture?.dispose()
         textureCache.values.forEach { it.dispose() }

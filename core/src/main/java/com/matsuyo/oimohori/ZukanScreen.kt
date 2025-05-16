@@ -32,45 +32,17 @@ class ZukanScreen(private val game: GameMain) : ScreenAdapter() {
         backToTopTexture.height * buttonScale
     )
 
-    private val imoTypes = listOf(
-        GameScreen.ImoType("通常芋", "normal_imo.png", 5),
-        GameScreen.ImoType("シルバー芋", "silver_imo.png", 7, 100, 0.2f),
-        GameScreen.ImoType("ゴールド芋", "gold_imo.png", 10, 100, 0.2f),
-        GameScreen.ImoType("メラメラ芋", "fire_imo.png", 12, 250, 0.2f),
-        GameScreen.ImoType("ヒエヒエ芋", "ice_imo.png", 12, 250, 0.2f),
-        GameScreen.ImoType("キラキラ芋", "star_imo.png", 12, 250, 0.2f),
-        GameScreen.ImoType("キリン芋", "giraffe_imo.png", 15, 370, 0.2f),
-        GameScreen.ImoType("シマウマ芋", "zebra_imo.png", 15, 370, 0.2f),
-        GameScreen.ImoType("ウシ芋", "cow_imo.png", 15, 370, 0.2f),
-        GameScreen.ImoType("DJ芋", "dj_imo.png", 17, 480, 0.2f),
-        GameScreen.ImoType("虹芋", "rainbow_imo.png", 17, 480, 0.2f),
-        GameScreen.ImoType("迷彩芋", "meisai_imo.png", 17, 480, 0.2f),
-        GameScreen.ImoType("日本芋", "japan_imo.png", 20, 600, 0.2f),
-        GameScreen.ImoType("アメリカ芋", "usa_imo.png", 20, 600, 0.2f),
-        GameScreen.ImoType("ドイツ芋", "germany_imo.png", 20, 600, 0.2f),
-        GameScreen.ImoType("ジャマイカ芋", "jamaica_imo.png", 20, 600, 0.2f),
-        GameScreen.ImoType("ロシア芋", "russia_imo.png", 20, 600, 0.2f),
-        GameScreen.ImoType("野球芋", "baseball_imo.png", 25, 720, 0.2f),
-        GameScreen.ImoType("ラグビーボール", "rugbyball.png", 25, 720, 0.2f),
-        GameScreen.ImoType("サッカー芋", "soccer_imo.png", 25, 720, 0.2f),
-        GameScreen.ImoType("バスケ芋", "basketball_imo.png", 25, 720, 0.2f),
-        GameScreen.ImoType("虫食い芋", "musikui_imo.png", 1, probability = 0.05f),
-        GameScreen.ImoType("小石", "koisi.png", 1, probability = 0.05f),
-        GameScreen.ImoType("ミミズ", "mimizu.png", 1, probability = 0.05f),
-        GameScreen.ImoType("ジャガイモ", "poteto.png", 1, probability = 0.05f)
-    )
-
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
         worldCamera.update()
         backToTopTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         completedTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         unknownImoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
-        font.data.setScale(1.0f) // フォントサイズ（必要に応じて調整）
+        font.data.setScale(1.0f)
         font.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
         // 芋のテキストテクスチャをキャッシュ
-        imoTypes.forEach { imoType ->
+        ImoConfig.imoTypes.forEach { imoType ->
             try {
                 val textTextureName = imoType.textureName.replace(".png", "_text.png")
                 val texture = Texture(Gdx.files.internal(textTextureName)).apply {
@@ -92,8 +64,8 @@ class ZukanScreen(private val game: GameMain) : ScreenAdapter() {
         val table = Table()
         table.align(Align.center)
 
-        // 25個の芋をimoTypesの順番で表示
-        imoTypes.forEach { imoType ->
+        // 芋をimoTypesの順番で表示
+        ImoConfig.imoTypes.forEach { imoType ->
             val textTextureName = if (game.unlockedImos.contains(imoType)) {
                 imoType.textureName.replace(".png", "_text.png")
             } else {
@@ -110,8 +82,6 @@ class ZukanScreen(private val game: GameMain) : ScreenAdapter() {
         scrollPane.setSize(1080f, 1820f - backToTopTexture.height * buttonScale - 50f)
         scrollPane.setPosition(0f, 0f)
         stage.addActor(scrollPane)
-
-        // 戻るボタンはStageではなく従来通り描画
     }
 
     override fun resize(width: Int, height: Int) {
@@ -142,7 +112,7 @@ class ZukanScreen(private val game: GameMain) : ScreenAdapter() {
             backButton.height
         )
         // completed.png（戻るボタンの右、20fの間隔、中央軸を揃える）
-        val centerY = backButton.y + backButton.height / 2 // 戻るボタンの中央Y
+        val centerY = backButton.y + backButton.height / 2
         val completedX = backButton.x + backButton.width + 20f
         val completedY = centerY - (completedTexture.height * buttonScale / 2)
         game.batch.draw(
@@ -153,12 +123,12 @@ class ZukanScreen(private val game: GameMain) : ScreenAdapter() {
             completedTexture.height * buttonScale
         )
         // 収集率（completed.pngの右、20fの間隔、中央軸を揃える）
-        val completionRate = (game.unlockedImos.size.toFloat() / imoTypes.size * 100).toInt()
+        val completionRate = (game.unlockedImos.size.toFloat() / ImoConfig.imoTypes.size * 100).toInt()
         font.draw(
             game.batch,
             "$completionRate%",
             completedX + completedTexture.width * buttonScale + 20f,
-            centerY + font.capHeight / 2, // フォントのベースラインを中央に
+            centerY + font.capHeight / 2,
             0f,
             Align.left,
             false

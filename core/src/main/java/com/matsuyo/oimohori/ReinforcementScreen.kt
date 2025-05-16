@@ -156,7 +156,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                 }
                 game.score -= game.moguraCost
                 game.moguraHarvest = (game.moguraHarvest * 1.5f).toInt()
-                game.moguraCost = (game.moguraCost * 1.25f).toInt()
+                game.moguraCost = (game.moguraCost * 2.25f).toInt()
                 game.saveGameState()
             }
 
@@ -167,7 +167,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                 }
                 game.score -= game.turuhasiValueCost
                 game.turuhasiLevel = (game.turuhasiLevel * 1.5f).toInt()
-                game.turuhasiValueCost = (game.turuhasiValueCost * 1.25f).toInt()
+                game.turuhasiValueCost = (game.turuhasiValueCost * 2.25f).toInt()
                 game.updateTuruhasiValue()
             }
 
@@ -179,7 +179,7 @@ class ReinforcementScreen(private val game: GameMain) : ScreenAdapter() {
                 game.score -= game.turuhasiUnlockCost
                 game.turuhasiUnlockedCount += 1
                 if (game.turuhasiUnlockedCount == 1) {
-                    game.turuhasiUnlockCost = 1000
+                    game.turuhasiUnlockCost = 1500
                 } else if (game.turuhasiUnlockedCount == 2) {
                     game.turuhasiUnlockCost = 0
                 }

@@ -16,14 +16,14 @@ class ResultScreen(
     private val game: GameMain,
     private val totalPoints: Int,
     private val collectedImos: Int,
-    private val imoCounts: Map<GameScreen.ImoType, Int>
+    private val imoCounts: Map<ImoType, Int>
 ) : ScreenAdapter() {
     private val worldCamera = OrthographicCamera()
     private val viewport = ExtendViewport(1080f, 1920f, worldCamera)
     private val pixelCamera = OrthographicCamera()
     private val shapeRenderer = ShapeRenderer()
     private val font = BitmapFont()
-    private val fontWhite = BitmapFont(Gdx.files.internal("font_white.fnt")) // 白色フォントをロード
+    private val fontWhite = BitmapFont(Gdx.files.internal("font_white.fnt"))
     private val mogura2Texture = Texture(Gdx.files.internal("mogura2.png"))
     private val mogura3Texture = Texture(Gdx.files.internal("mogura3.png"))
     private val imoTexture = Texture(Gdx.files.internal("normal_imo.png"))
@@ -39,7 +39,7 @@ class ResultScreen(
     private val doubleButton = Rectangle((1080f - 3 * buttonWidth - 100f) / 2 + buttonWidth + 50f, 1620f, buttonWidth, buttonHeight)
     private val breakdownButton = Rectangle((1080f - 3 * buttonWidth - 100f) / 2 + 2 * (buttonWidth + 50f), 1620f, buttonWidth, buttonHeight)
     private var animationTimer = 0f
-    private val animationInterval = 0.5f // 0.5秒ごとに切り替え
+    private val animationInterval = 0.5f
     private var isMogura2 = true
 
     init {
@@ -49,8 +49,8 @@ class ResultScreen(
         pixelCamera.position.set(Gdx.graphics.width / 2f, Gdx.graphics.height / 2f, 0f)
         pixelCamera.update()
         font.data.setScale(4.8f)
-        fontWhite.data.setScale(1.0f) // 白色フォントのスケールを1.0に設定
-        fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear) // 滑らかに表示
+        fontWhite.data.setScale(1.0f)
+        fontWhite.region.texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         mogura2Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         mogura3Texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         imoTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
@@ -92,9 +92,9 @@ class ResultScreen(
         val screenHeight = Gdx.graphics.height.toFloat()
         val screenWidth = Gdx.graphics.width.toFloat()
         val midY = screenHeight * 0.3385417f
-        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f) // 茶色（下半分）
+        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
         shapeRenderer.rect(0f, 0f, screenWidth, midY)
-        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f) // 水色（上半分）
+        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
         shapeRenderer.rect(0f, midY, screenWidth, screenHeight - midY)
         shapeRenderer.end()
 
@@ -103,9 +103,9 @@ class ResultScreen(
         // ワールド座標で背景を塗りつぶし
         shapeRenderer.projectionMatrix = worldCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f) // 水色（全体）
+        shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
         shapeRenderer.rect(0f, 0f, 1080f, 1920f)
-        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f) // 茶色（下部 y=0～650）
+        shapeRenderer.setColor(0.5451f, 0.3412f, 0.2157f, 1f)
         shapeRenderer.rect(0f, 0f, 1080f, 650f)
         shapeRenderer.end()
 
@@ -122,9 +122,9 @@ class ResultScreen(
             currentMoguraTexture.height * imageScale
         )
 
-        // さつまいも（y=300, x=300）とスコア（y=300, x=550）
+        // さつまいも（y=150, x=200）とスコア（y=300, x=450）
         game.batch.draw(imoTexture, 200f, 150f, imoTexture.width * imoScale, imoTexture.height * imoScale)
-        fontWhite.draw(game.batch, "${totalPoints}pt GET", 450f, 300f, 0f, Align.left, false) // font_whiteを使用
+        fontWhite.draw(game.batch, "${totalPoints}pt GET", 450f, 300f, 0f, Align.left, false)
 
         // ボタン（y=1620、中央）
         game.batch.draw(retryButtonTexture, retryButton.x, retryButton.y, retryButton.width, retryButton.height)
@@ -138,13 +138,11 @@ class ResultScreen(
 
     private fun handleInput() {
         if (Gdx.input.justTouched()) {
-            // ビューポートを使用してタッチ座標をワールド座標に変換
             val touchPos = Vector2(Gdx.input.x.toFloat(), Gdx.input.y.toFloat())
             viewport.unproject(touchPos)
             val touchX = touchPos.x
             val touchY = touchPos.y
 
-            // タッチ座標のデバッグログ
             Gdx.app.log("ResultScreen", "Touch: x=$touchX, y=$touchY")
 
             if (retryButton.contains(touchX, touchY)) {
@@ -171,7 +169,7 @@ class ResultScreen(
 
     override fun dispose() {
         font.dispose()
-        fontWhite.dispose() // font_whiteのリソース解放を追加
+        fontWhite.dispose()
         mogura2Texture.dispose()
         mogura3Texture.dispose()
         imoTexture.dispose()
