@@ -343,6 +343,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
                             imoCounts[selectedImo] = imoCounts.getOrDefault(selectedImo, 0) + 1
+                            game.unlockedImos.add(selectedImo) // 獲得した芋を記録
                             val imoY = tsutaY - (i + 1) * (textureCache[selectedImo.textureName]?.height?.times(imoScale)?.times(0.1f) ?: 50f)
                             val spreadFactor = i * 2f
                             val angle = 0.5f
@@ -355,6 +356,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                             val selectedImo = selectImoType(collectedImos)
                             totalPoints += selectedImo.points
                             imoCounts[selectedImo] = imoCounts.getOrDefault(selectedImo, 0) + 1
+                            game.unlockedImos.add(selectedImo) // 獲得した芋を記録
                         }
 
                         game.score += totalPoints

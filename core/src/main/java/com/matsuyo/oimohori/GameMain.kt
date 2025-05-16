@@ -16,6 +16,7 @@ class GameMain : Game() {
     var turuhasiValueCost = 50
     var turuhasiUnlockedCount = 0
     var turuhasiUnlockCost = 350
+    val unlockedImos = mutableSetOf<GameScreen.ImoType>() // 獲得した芋の種類を保存
 
     // オーディオリソース
     lateinit var bgm: Music
