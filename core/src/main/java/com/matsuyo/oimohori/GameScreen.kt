@@ -287,7 +287,7 @@ class GameScreen(private val game: GameMain) : ScreenAdapter() {
                     if (swipeDir.y > 0.5f) {
                         val swipeSpeed = 1500f
                         val bonus = if (swipeSpeed > 1000f) 2 else 1
-                        collectedImos = game.moguraHarvest * game.turuhasiValue * bonus
+                        collectedImos = minOf(game.moguraHarvest * game.turuhasiValue * bonus, 3000)
 
                         // 収穫時の効果音を再生
                         if (game.isSyuukakujiSoundInitialized()) {

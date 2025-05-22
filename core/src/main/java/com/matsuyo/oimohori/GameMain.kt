@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 
 class GameMain : Game() {
     lateinit var batch: SpriteBatch
-    var score = 5000
+    var score = 0
     var moguraHarvest = 1
     var turuhasiLevel = 3
     var turuhasiValue = 3
@@ -74,7 +74,7 @@ class GameMain : Game() {
 
     // ゲーム状態を読み込む
     private fun loadGameState() {
-        score = prefs.getInteger("score", 5000)
+        score = prefs.getInteger("score", 0)
         moguraHarvest = prefs.getInteger("moguraHarvest", 1)
         turuhasiLevel = prefs.getInteger("turuhasiLevel", 3)
         turuhasiValue = prefs.getInteger("turuhasiValue", 3)
