@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.ExtendViewport
+import com.badlogic.gdx.Application
 
 class ResultScreen(
     private val game: GameMain,
@@ -24,12 +25,18 @@ class ResultScreen(
     private val shapeRenderer = ShapeRenderer()
     private val font = BitmapFont()
     private val fontWhite = BitmapFont(Gdx.files.internal("font_white.fnt"))
-    private val mogura2Texture = Texture(Gdx.files.internal("mogura2.png"))
-    private val mogura3Texture = Texture(Gdx.files.internal("mogura3.png"))
-    private val imoTexture = Texture(Gdx.files.internal("normal_imo.png"))
-    private val retryButtonTexture = Texture(Gdx.files.internal("retry_btn.png"))
-    private val doubleButtonTexture = Texture(Gdx.files.internal("double_btn.png"))
-    private val breakdownButtonTexture = Texture(Gdx.files.internal("breakdown_btn.png"))
+    private val mogura2TexturePath = "mogura2.png"
+    private val mogura3TexturePath = "mogura3.png"
+    private val imoTexturePath = "normal_imo.png"
+    private val retryButtonTexturePath = "retry_btn.png"
+    private val doubleButtonTexturePath = "double_btn.png"
+    private val breakdownButtonTexturePath = "breakdown_btn.png"
+    private val mogura2Texture = Texture(Gdx.files.internal(mogura2TexturePath))
+    private val mogura3Texture = Texture(Gdx.files.internal(mogura3TexturePath))
+    private val imoTexture = Texture(Gdx.files.internal(imoTexturePath))
+    private val retryButtonTexture = Texture(Gdx.files.internal(retryButtonTexturePath))
+    private val doubleButtonTexture = Texture(Gdx.files.internal(doubleButtonTexturePath))
+    private val breakdownButtonTexture = Texture(Gdx.files.internal(breakdownButtonTexturePath))
     private val buttonScale = 0.8f
     private val imageScale = 1.0f
     private val imoScale = 0.5f
@@ -41,6 +48,8 @@ class ResultScreen(
     private var animationTimer = 0f
     private val animationInterval = 0.5f
     private var isMogura2 = true
+    private var lastTouchTime = 0f
+    private val touchCooldown = 0.2f // タッチ間隔（秒）
 
     init {
         worldCamera.position.set(1080f / 2f, 1920f / 2f, 0f)
@@ -58,10 +67,13 @@ class ResultScreen(
         doubleButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
         breakdownButtonTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
 
-        // ResultScreen表示時に効果音を再生
         if (game.isResultSoundInitialized()) {
             game.resultSound.play()
         }
+
+        // ResultScreenが表示された際に、今回獲得したポイントをセット
+        game.currentPlayPoints = totalPoints
+        Gdx.app.log("ResultScreen", "Initialized: currentPlayPoints=$totalPoints, score=${game.score}, pointsAdded=${game.pointsAdded}")
     }
 
     override fun resize(width: Int, height: Int) {
@@ -74,19 +86,17 @@ class ResultScreen(
     }
 
     override fun render(delta: Float) {
-        // アニメーションタイマーを更新
         animationTimer += delta
+        lastTouchTime += delta
         if (animationTimer >= animationInterval) {
             isMogura2 = !isMogura2
             animationTimer = 0f
-            Gdx.app.log("ResultScreen", "Switched to ${if (isMogura2) "mogura2.png" else "mogura3.png"}")
+            Gdx.app.log("ResultScreen", "Switched to ${if (isMogura2) mogura2TexturePath else mogura3TexturePath}")
         }
 
-        // 黒帯対策：ピクセル座標で画面クリア
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
-        // ピクセル座標で背景を上下分割
         shapeRenderer.projectionMatrix = pixelCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         val screenHeight = Gdx.graphics.height.toFloat()
@@ -100,7 +110,6 @@ class ResultScreen(
 
         viewport.apply()
 
-        // ワールド座標で背景を塗りつぶし
         shapeRenderer.projectionMatrix = worldCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         shapeRenderer.setColor(0.3608f, 0.8824f, 0.9020f, 1f)
@@ -112,7 +121,6 @@ class ResultScreen(
         game.batch.projectionMatrix = worldCamera.combined
         game.batch.begin()
 
-        // モグラ（y=600、中央、アニメーション）
         val currentMoguraTexture = if (isMogura2) mogura2Texture else mogura3Texture
         game.batch.draw(
             currentMoguraTexture,
@@ -122,11 +130,9 @@ class ResultScreen(
             currentMoguraTexture.height * imageScale
         )
 
-        // さつまいも（y=150, x=200）とスコア（y=300, x=450）
         game.batch.draw(imoTexture, 200f, 150f, imoTexture.width * imoScale, imoTexture.height * imoScale)
-        fontWhite.draw(game.batch, "${totalPoints}pt GET", 450f, 300f, 0f, Align.left, false)
+        fontWhite.draw(game.batch, "${game.currentPlayPoints}pt GET", 450f, 300f, 0f, Align.left, false)
 
-        // ボタン（y=1620、中央）
         game.batch.draw(retryButtonTexture, retryButton.x, retryButton.y, retryButton.width, retryButton.height)
         game.batch.draw(doubleButtonTexture, doubleButton.x, doubleButton.y, doubleButton.width, doubleButton.height)
         game.batch.draw(breakdownButtonTexture, breakdownButton.x, breakdownButton.y, breakdownButton.width, breakdownButton.height)
@@ -137,7 +143,8 @@ class ResultScreen(
     }
 
     private fun handleInput() {
-        if (Gdx.input.justTouched()) {
+        if (Gdx.input.justTouched() && lastTouchTime >= touchCooldown) {
+            lastTouchTime = 0f
             val touchPos = Vector2(Gdx.input.x.toFloat(), Gdx.input.y.toFloat())
             viewport.unproject(touchPos)
             val touchX = touchPos.x
@@ -150,17 +157,45 @@ class ResultScreen(
                 if (game.isPushSoundInitialized()) {
                     game.pushSound.play()
                 }
+                // 初回のみポイントを加算
+                if (!game.pointsAdded) {
+                    game.updateScore(game.score + game.currentPlayPoints)
+                    game.pointsAdded = true
+                    Gdx.app.log("ResultScreen", "Points added on Retry: currentPlayPoints=${game.currentPlayPoints}, score=${game.score}")
+                } else {
+                    Gdx.app.log("ResultScreen", "Points already added, skipping on Retry.")
+                }
                 game.setScreen(TitleScreen(game))
             } else if (doubleButton.contains(touchX, touchY)) {
                 Gdx.app.log("ResultScreen", "Double button tapped")
                 if (game.isPushSoundInitialized()) {
                     game.pushSound.play()
                 }
-                // ダブルボタンの処理（未実装の場合、ログのみ）
+                if (Gdx.app.type == Application.ApplicationType.Android) {
+                    if (game.pointsAdded) {
+                        game.showMessageDialog("次のプレイ後に有効になります。")
+                        Gdx.app.log("ResultScreen", "Message dialog shown: Ad already used")
+                    } else {
+                        game.showAdDialog("広告を視聴してポイントを2倍にしますか？", Runnable {
+                            game.currentPlayPoints *= 2
+                            game.updateScore(game.score + game.currentPlayPoints)
+                            game.pointsAdded = true
+                            Gdx.app.log("ResultScreen", "Points doubled and added: currentPlayPoints=${game.currentPlayPoints}, score=${game.score}")
+                        })
+                    }
+                }
             } else if (breakdownButton.contains(touchX, touchY)) {
                 Gdx.app.log("ResultScreen", "Breakdown button tapped")
                 if (game.isPushSoundInitialized()) {
                     game.pushSound.play()
+                }
+                // 初回のみポイントを加算
+                if (!game.pointsAdded) {
+                    game.updateScore(game.score + game.currentPlayPoints)
+                    game.pointsAdded = true
+                    Gdx.app.log("ResultScreen", "Points added on Breakdown: currentPlayPoints=${game.currentPlayPoints}, score=${game.score}")
+                } else {
+                    Gdx.app.log("ResultScreen", "Points already added, skipping on Breakdown.")
                 }
                 game.setScreen(BreakdownScreen(game, collectedImos, imoCounts, this))
             }

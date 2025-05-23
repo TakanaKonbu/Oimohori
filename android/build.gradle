@@ -1,4 +1,3 @@
-
 buildscript {
   repositories {
     mavenCentral()
@@ -23,16 +22,16 @@ android {
     }
   }
   packagingOptions {
-		resources {
-			excludes += ['META-INF/robovm/ios/robovm.xml', 'META-INF/DEPENDENCIES.txt', 'META-INF/DEPENDENCIES',
+    resources {
+      excludes += ['META-INF/robovm/ios/robovm.xml', 'META-INF/DEPENDENCIES.txt', 'META-INF/DEPENDENCIES',
                    'META-INF/dependencies.txt', '**/*.gwt.xml']
-			pickFirsts += ['META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/license.txt', 'META-INF/LGPL2.1',
+      pickFirsts += ['META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/license.txt', 'META-INF/LGPL2.1',
                      'META-INF/NOTICE.txt', 'META-INF/NOTICE', 'META-INF/notice.txt']
-		}
+    }
   }
   defaultConfig {
     applicationId 'com.matsuyo.oimohori'
-    minSdkVersion 19
+    minSdkVersion 21 // 19から21に変更
     targetSdkVersion 35
     versionCode 1
     versionName "1.0"
@@ -51,12 +50,11 @@ android {
   }
 
   kotlin.compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
-  
 }
 
 repositories {
-  // needed for AAPT2, may be needed for other tools
   google()
+  mavenCentral()
 }
 
 configurations { natives }
@@ -65,6 +63,7 @@ dependencies {
   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
   implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
   implementation project(':core')
+  implementation 'com.google.android.gms:play-services-ads:23.3.0'
 
   natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-arm64-v8a"
   natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
@@ -78,12 +77,8 @@ dependencies {
   natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
   natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
   natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
-
 }
 
-// Called every time gradle gets executed, takes the native dependencies of
-// the natives configuration, and extracts them to the proper libs/ folders
-// so they get packed with the APK.
 tasks.register('copyAndroidNatives') {
   doFirst {
     file("libs/armeabi-v7a/").mkdirs()

@@ -18,20 +18,21 @@ class GameMain : Game() {
     var turuhasiUnlockedCount = 0
     var turuhasiUnlockCost = 350
     val unlockedImos = mutableSetOf<ImoType>()
+    var adHandler: AdHandler? = null
+    var currentPlayPoints = 0
+    var pointsAdded = false
 
-    // オーディオリソース
     lateinit var bgm: Music
     lateinit var resultSound: Sound
     lateinit var tsuruhasiSound: Sound
     lateinit var syuukakujiSound: Sound
     lateinit var pushSound: Sound
 
-    // Preferencesのインスタンス
     private val prefs: Preferences by lazy { Gdx.app.getPreferences("OimohoriPrefs") }
 
     override fun create() {
         batch = SpriteBatch()
-        loadGameState() // ゲーム状態を読み込む
+        loadGameState()
         try {
             bgm = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"))
             bgm.isLooping = true
@@ -50,10 +51,16 @@ class GameMain : Game() {
             Gdx.app.error("GameMain", "Failed to load sound effects: ${e.message}")
         }
 
+        // ここからresetPlayPoints()の呼び出しを削除
         setScreen(TitleScreen(this))
     }
 
-    // ゲーム状態を保存
+    fun resetPlayPoints() {
+        currentPlayPoints = 0
+        pointsAdded = false
+        Gdx.app.log("GameMain", "Play points reset: currentPlayPoints=$currentPlayPoints, pointsAdded=$pointsAdded")
+    }
+
     fun saveGameState() {
         prefs.putInteger("score", score)
         prefs.putInteger("moguraHarvest", moguraHarvest)
@@ -64,15 +71,13 @@ class GameMain : Game() {
         prefs.putInteger("turuhasiUnlockedCount", turuhasiUnlockedCount)
         prefs.putInteger("turuhasiUnlockCost", turuhasiUnlockCost)
 
-        // unlockedImosを保存（textureNameのリストとして保存）
         val imoNames = unlockedImos.map { it.textureName }.joinToString(",")
         prefs.putString("unlockedImos", imoNames)
 
-        prefs.flush() // 保存を確定
-        Gdx.app.log("GameMain", "Game state saved")
+        prefs.flush()
+        Gdx.app.log("GameMain", "Game state saved: score=$score")
     }
 
-    // ゲーム状態を読み込む
     private fun loadGameState() {
         score = prefs.getInteger("score", 0)
         moguraHarvest = prefs.getInteger("moguraHarvest", 1)
@@ -83,7 +88,6 @@ class GameMain : Game() {
         turuhasiUnlockedCount = prefs.getInteger("turuhasiUnlockedCount", 0)
         turuhasiUnlockCost = prefs.getInteger("turuhasiUnlockCost", 500)
 
-        // unlockedImosを読み込む
         val imoNames = prefs.getString("unlockedImos", "").split(",").filter { it.isNotEmpty() }
         unlockedImos.clear()
         imoNames.forEach { textureName ->
@@ -95,22 +99,28 @@ class GameMain : Game() {
 
     fun updateTuruhasiValue() {
         turuhasiValue = turuhasiLevel * (turuhasiUnlockedCount + 1)
-        saveGameState() // 状態変更後に保存
-    }
-
-    // スコアを更新
-    fun updateScore(newScore: Int) {
-        score = newScore
         saveGameState()
     }
 
-    // 芋をアンロック
+    fun updateScore(newScore: Int) {
+        score = newScore
+        saveGameState()
+        Gdx.app.log("GameMain", "Score updated: score=$score")
+    }
+
     fun unlockImo(imoType: ImoType) {
         unlockedImos.add(imoType)
         saveGameState()
     }
 
-    // 初期化チェック用のメソッド
+    fun showAdDialog(message: String, onRewardGranted: Runnable) {
+        adHandler?.showAdDialog(message, onRewardGranted)
+    }
+
+    fun showMessageDialog(message: String) {
+        adHandler?.showMessageDialog(message)
+    }
+
     fun isTsuruhasiSoundInitialized(): Boolean {
         return ::tsuruhasiSound.isInitialized
     }
@@ -127,7 +137,6 @@ class GameMain : Game() {
         return ::pushSound.isInitialized
     }
 
-    // サウンド停止用のメソッド
     fun stopSyuukakujiSound() {
         if (::syuukakujiSound.isInitialized) {
             syuukakujiSound.stop()
@@ -135,7 +144,7 @@ class GameMain : Game() {
     }
 
     override fun dispose() {
-        saveGameState() // アプリ終了時に保存
+        saveGameState()
         batch.dispose()
         if (::bgm.isInitialized) bgm.dispose()
         if (::resultSound.isInitialized) resultSound.dispose()

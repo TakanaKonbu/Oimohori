@@ -157,6 +157,7 @@ class TitleScreen(private val game: GameMain) : ScreenAdapter() {
             // ボタン外の画面タッチで GameScreen に遷移
             if (touchX in 0f..1080f && touchY >= 0f && touchY <= 1920f) {
                 Gdx.app.log("TitleScreen", "Title tapped")
+                game.resetPlayPoints() // ここでresetPlayPoints()を呼び出す
                 game.setScreen(GameScreen(game))
             }
         }
